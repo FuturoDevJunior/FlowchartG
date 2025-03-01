@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface ButtonProps {
+export interface ButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
@@ -9,6 +9,8 @@ interface ButtonProps {
   fullWidth?: boolean;
   type?: 'button' | 'submit' | 'reset';
   className?: string;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -20,6 +22,8 @@ const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
   type = 'button',
   className = '',
+  onMouseEnter,
+  onMouseLeave
 }) => {
   const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
   
@@ -27,7 +31,7 @@ const Button: React.FC<ButtonProps> = ({
     primary: 'bg-[#00FF88] text-[#2A2A2A] hover:bg-[#00CC66] focus-visible:ring-[#00FF88]',
     secondary: 'bg-[#2A2A2A] text-white hover:bg-[#3A3A3A] focus-visible:ring-[#2A2A2A]',
     danger: 'bg-red-500 text-white hover:bg-red-600 focus-visible:ring-red-500',
-    ghost: 'bg-transparent hover:bg-gray-100 text-[#2A2A2A] focus-visible:ring-gray-400',
+    ghost: 'bg-transparent hover:bg-gray-800 text-white focus-visible:ring-gray-400',
   };
   
   const sizeStyles = {
@@ -44,6 +48,8 @@ const Button: React.FC<ButtonProps> = ({
       onClick={onClick}
       disabled={disabled}
       className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${widthStyle} ${className}`}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       {children}
     </button>

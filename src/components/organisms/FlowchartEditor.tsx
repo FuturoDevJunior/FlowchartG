@@ -4,17 +4,15 @@ import { FlowchartData } from '../../types';
 import Toolbar from '../molecules/Toolbar';
 import ShareModal from '../molecules/ShareModal';
 import { saveToLocalStorage, generateShareableLink } from '../../lib/storage';
-import { saveFlowchart } from '../../lib/supabase';
 import Watermark from '../atoms/Watermark';
 
 interface FlowchartEditorProps {
   initialData?: FlowchartData;
-  isAuthenticated: boolean;
+  isAuthenticated: boolean; // Mantido por compatibilidade, mas não será usado
 }
 
 const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   initialData,
-  isAuthenticated,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<FlowchartCanvas | null>(null);
@@ -23,6 +21,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareableLink, setShareableLink] = useState('');
   const [flowchartData, setFlowchartData] = useState<FlowchartData | undefined>(initialData);
+  const [showTutorial, setShowTutorial] = useState(!localStorage.getItem('tutorialSeen'));
 
   // Initialize canvas
   useEffect(() => {
@@ -42,8 +41,21 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     };
   }, [initialData]);
 
+  // Tutorial que desaparece após 15 segundos
+  useEffect(() => {
+    if (showTutorial) {
+      const timer = setTimeout(() => {
+        setShowTutorial(false);
+        localStorage.setItem('tutorialSeen', 'true');
+      }, 15000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showTutorial]);
+
   const handleFlowchartChange = (data: FlowchartData) => {
     setFlowchartData(data);
+    // Salvar automaticamente a cada mudança
     saveToLocalStorage(data);
   };
 
@@ -71,9 +83,8 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
       // Start connecting mode
       setIsConnecting(true);
       
-      // TODO: Implement node selection logic
-      // For now, we'll just show a message
-      alert('Select the first node to connect');
+      // Instrução mais clara
+      alert('Clique no primeiro nó e depois no segundo nó para conectá-los');
     }
   };
 
@@ -109,28 +120,13 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   const handleSave = async () => {
     if (!fabricCanvasRef.current || !flowchartData) return;
     
-    // Always save to localStorage
+    // Salvar apenas localmente
     saveToLocalStorage(flowchartData);
-    
-    // If authenticated, also save to Supabase
-    if (isAuthenticated) {
-      try {
-        const { error } = await saveFlowchart(flowchartData);
-        if (error) {
-          alert(`Error saving flowchart: ${error.message}`);
-        } else {
-          alert('Flowchart saved successfully!');
-        }
-      } catch (error) {
-        alert('An error occurred while saving the flowchart.');
-      }
-    } else {
-      alert('Flowchart saved to local storage. Sign in to save to the cloud.');
-    }
+    alert('Fluxograma salvo localmente com sucesso!');
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-full">
       <Toolbar
         onAddNode={handleAddNode}
         onAddConnector={handleAddConnector}
@@ -147,6 +143,27 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
           id="flowchart-canvas"
           className="absolute inset-0"
         />
+        
+        {showTutorial && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white p-4 rounded-lg shadow-lg z-10 max-w-md">
+            <h3 className="font-bold mb-2">Como usar:</h3>
+            <ol className="list-decimal pl-5 space-y-1 text-sm">
+              <li>Clique em "Retângulo", "Círculo" ou "Diamante" para adicionar um nó</li>
+              <li>Clique duas vezes em um nó para editar o texto</li>
+              <li>Use "Conectar" para criar linhas entre os nós</li>
+              <li>Tudo é salvo automaticamente no seu navegador</li>
+            </ol>
+            <button 
+              onClick={() => {
+                setShowTutorial(false);
+                localStorage.setItem('tutorialSeen', 'true');
+              }}
+              className="mt-2 px-2 py-1 bg-green-600 rounded text-xs hover:bg-green-700"
+            >
+              Entendi!
+            </button>
+          </div>
+        )}
       </div>
       
       <ShareModal

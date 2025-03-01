@@ -1,22 +1,24 @@
-import React, { useState } from 'react';
-import { User, LogOut } from 'lucide-react';
+import React from 'react';
+import { Download, Share, Github } from 'lucide-react';
 import Button from '../atoms/Button';
-import AuthModal from '../molecules/AuthModal';
-import { signOut } from '../../lib/supabase';
-import { User as UserType } from '../../types';
 
 interface LayoutProps {
   children: React.ReactNode;
-  user: UserType | null;
-  onAuthChange: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, user, onAuthChange }) => {
-  const [authModalOpen, setAuthModalOpen] = useState(false);
+const Layout: React.FC<LayoutProps> = ({ children }) => {
+  // Função para exportar o diagrama
+  const handleExport = () => {
+    // Esta função será implementada posteriormente
+    alert('Função de exportação será implementada em breve!');
+  };
 
-  const handleSignOut = async () => {
-    await signOut();
-    onAuthChange();
+  // Função para compartilhar
+  const handleShare = () => {
+    // Esta função será implementada posteriormente
+    const shareableUrl = window.location.href;
+    navigator.clipboard.writeText(shareableUrl);
+    alert('Link copiado para a área de transferência! Compartilhe com quem quiser.');
   };
 
   return (
@@ -44,33 +46,38 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onAuthChange }) => {
               strokeLinejoin="round"
             />
           </svg>
-          <h1 className="text-xl font-bold">FlowchartSaaS</h1>
+          <h1 className="text-xl font-bold">FlowchartG</h1>
+          <span className="ml-2 text-xs text-gray-400">Crie fluxogramas facilmente</span>
         </div>
         
-        <div>
-          {user ? (
-            <div className="flex items-center">
-              <span className="mr-4 text-sm hidden md:inline-block">
-                {user.email}
-              </span>
-              <Button
-                variant="ghost"
-                onClick={handleSignOut}
-                className="text-white hover:bg-gray-700"
-              >
-                <LogOut size={20} className="mr-1" />
-                <span className="hidden sm:inline">Sign Out</span>
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant="primary"
-              onClick={() => setAuthModalOpen(true)}
-            >
-              <User size={20} className="mr-1" />
-              <span>Sign In</span>
-            </Button>
-          )}
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            onClick={handleExport}
+            className="text-white hover:bg-gray-700"
+          >
+            <Download size={18} className="mr-1" />
+            <span className="hidden sm:inline">Exportar</span>
+          </Button>
+          
+          <Button
+            variant="ghost"
+            onClick={handleShare}
+            className="text-white hover:bg-gray-700"
+          >
+            <Share size={18} className="mr-1" />
+            <span className="hidden sm:inline">Compartilhar</span>
+          </Button>
+          
+          <a 
+            href="https://github.com/FuturoDevJunior/FlowchartG" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center px-3 py-1.5 text-sm text-white bg-transparent hover:bg-gray-700 rounded-md transition-colors"
+          >
+            <Github size={18} className="mr-1" />
+            <span className="hidden sm:inline">GitHub</span>
+          </a>
         </div>
       </header>
       
@@ -78,10 +85,9 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onAuthChange }) => {
         {children}
       </main>
       
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-      />
+      <footer className="bg-[#1A1A1A] text-gray-400 text-xs p-2 text-center">
+        FlowchartG - Ferramenta simples para criação de fluxogramas. Dados salvos apenas localmente.
+      </footer>
     </div>
   );
 };
