@@ -6,7 +6,7 @@ import { loadFromLocalStorage, loadFromShareableLink } from './lib/storage';
 
 /**
  * Main FlowchartG Application Component
- * Handles data loading and initialization
+ * Version without authentication - uses only local storage
  */
 function App() {
   const [initialData, setInitialData] = useState<FlowchartData | undefined>(undefined);
@@ -69,7 +69,7 @@ function App() {
     );
   }
 
-  // Main application render
+  // Main application render - local storage only version
   return (
     <Layout>
       <div className="bg-green-700 text-white px-4 py-2 text-center text-sm mb-2">
@@ -77,7 +77,6 @@ function App() {
       </div>
       <FlowchartEditor
         initialData={initialData}
-        isAuthenticated={false}
       />
     </Layout>
   );

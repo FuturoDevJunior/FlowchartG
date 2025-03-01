@@ -1,14 +1,7 @@
 /**
  * Core types for the FlowchartG application
+ * Local storage version - no authentication
  */
-
-// User type for authentication
-export interface User {
-  id: string;
-  email: string;
-  name?: string;
-  avatarUrl?: string;
-}
 
 // Flowchart Node definition
 export interface FlowchartNode {
@@ -22,7 +15,7 @@ export interface FlowchartNode {
   fill: string;
   stroke: string;
   strokeWidth?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Flowchart Connector definition
@@ -34,7 +27,7 @@ export interface FlowchartConnector {
   strokeWidth: number;
   arrow: boolean;
   dashArray?: number[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Complete Flowchart Data structure
@@ -45,31 +38,5 @@ export interface FlowchartData {
   connectors: FlowchartConnector[];
   createdAt: string;
   updatedAt: string;
-  userId?: string;
-  isPublic?: boolean;
   version?: string;
 }
-
-// Database tables types for Supabase
-export type Tables = {
-  flowcharts: {
-    id: string;
-    name: string;
-    data: {
-      nodes: FlowchartNode[];
-      connectors: FlowchartConnector[];
-    };
-    user_id: string;
-    created_at: string;
-    updated_at: string;
-    is_public: boolean;
-    version: string;
-  };
-  profiles: {
-    id: string;
-    email: string;
-    name: string | null;
-    avatar_url: string | null;
-    updated_at: string;
-  };
-};

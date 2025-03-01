@@ -1,18 +1,16 @@
-import React, { useEffect, useRef, useState, lazy, Suspense, useCallback } from 'react';
-// Remove the direct import and use dynamic import later
-// import { FlowchartCanvas } from '../../lib/fabricCanvas';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { FlowchartData } from '../../types';
 import Toolbar from '../molecules/Toolbar';
 import ShareModal from '../molecules/ShareModal';
 import { saveToLocalStorage, generateShareableLink } from '../../lib/storage';
 import Watermark from '../atoms/Watermark';
+import { Plus, Minus, Maximize2 } from 'lucide-react';
 
 // Type for the dynamically imported FlowchartCanvas
 type FlowchartCanvasType = import('../../lib/fabricCanvas').FlowchartCanvas;
 
 interface FlowchartEditorProps {
   initialData?: FlowchartData;
-  isAuthenticated: boolean;
 }
 
 const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
@@ -31,6 +29,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   // Detect if user is on mobile device
   useEffect(() => {
@@ -88,6 +87,13 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
             // Hook up resize handler
             window.addEventListener('resize', handleResize);
             
+            // Center view if there are elements
+            if (initialData?.nodes?.length) {
+              setTimeout(() => {
+                centerView();
+              }, 300);
+            }
+            
             setIsLoading(false);
           } catch (error) {
             console.error("Error loading canvas:", error);
@@ -130,6 +136,39 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
       }
     };
   }, [initialData, isMobile]);
+
+  // Handle zoom operations
+  const handleZoomIn = useCallback(() => {
+    if (!fabricCanvasRef.current) return;
+    try {
+      const newZoom = Math.min(zoomLevel + 0.1, 3);
+      setZoomLevel(newZoom);
+      fabricCanvasRef.current.setZoom(newZoom);
+    } catch (error) {
+      console.error("Error zooming in:", error);
+    }
+  }, [zoomLevel]);
+
+  const handleZoomOut = useCallback(() => {
+    if (!fabricCanvasRef.current) return;
+    try {
+      const newZoom = Math.max(zoomLevel - 0.1, 0.3);
+      setZoomLevel(newZoom);
+      fabricCanvasRef.current.setZoom(newZoom);
+    } catch (error) {
+      console.error("Error zooming out:", error);
+    }
+  }, [zoomLevel]);
+
+  const centerView = useCallback(() => {
+    if (!fabricCanvasRef.current) return;
+    try {
+      fabricCanvasRef.current.centerView();
+      setZoomLevel(1); // Reset zoom to 1 when centering view
+    } catch (error) {
+      console.error("Error centering view:", error);
+    }
+  }, []);
 
   // Handle window resizing
   const handleResize = useCallback(() => {
@@ -333,7 +372,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
       
       <div 
         ref={containerRef}
-        className="flex-1 flex items-center justify-center p-4 bg-gray-100 overflow-hidden"
+        className="flex-1 flex items-center justify-center p-4 bg-gray-100 overflow-hidden relative"
         style={{ 
           minHeight: isMobile ? '60vh' : '70vh',
           height: isMobile ? 'calc(var(--vh, 1vh) * 80)' : 'auto'
@@ -359,6 +398,35 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
               boxShadow: 'inset 0 0 10px rgba(0,0,0,0.05)'
             }}
           />
+
+          {/* Zoom Controls */}
+          <div className="absolute bottom-4 right-4 z-30 bg-white rounded-lg shadow-md p-2 flex items-center space-x-1">
+            <button 
+              onClick={handleZoomOut}
+              className="p-1 hover:bg-gray-100 rounded-full"
+              title="Diminuir zoom"
+            >
+              <Minus size={18} />
+            </button>
+            <span className="text-xs font-mono px-2">
+              {Math.round(zoomLevel * 100)}%
+            </span>
+            <button 
+              onClick={handleZoomIn}
+              className="p-1 hover:bg-gray-100 rounded-full"
+              title="Aumentar zoom"
+            >
+              <Plus size={18} />
+            </button>
+            <div className="w-px h-6 bg-gray-200 mx-1"></div>
+            <button 
+              onClick={centerView}
+              className="p-1 hover:bg-gray-100 rounded-full"
+              title="Centralizar diagrama"
+            >
+              <Maximize2 size={18} />
+            </button>
+          </div>
           
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-white z-20">
@@ -401,6 +469,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
               <li>Clique em "Retângulo", "Círculo" ou "Losango" para adicionar um nó</li>
               <li>Clique duas vezes em um nó para editar o texto</li>
               <li>Use "Conectar" para criar linhas entre os nós</li>
+              <li>Use os controles de zoom para ajustar a visualização</li>
               <li>Tudo é salvo automaticamente no seu navegador</li>
             </ol>
             <button 

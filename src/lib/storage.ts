@@ -1,8 +1,8 @@
 import DOMPurify from 'dompurify';
 import { FlowchartData } from '../types';
 
-// Local storage key
-const STORAGE_KEY = 'flowchart_saas_data';
+// Local storage key from environment variables or fallback
+const STORAGE_KEY = import.meta.env.VITE_LOCAL_STORAGE_KEY || 'flowchart_g_data';
 
 // Sanitize data before storing
 const sanitizeData = (data: unknown): unknown => {
@@ -26,6 +26,9 @@ const sanitizeData = (data: unknown): unknown => {
   return data;
 };
 
+/**
+ * Save flowchart data to local storage
+ */
 export const saveToLocalStorage = (data: FlowchartData): void => {
   try {
     const sanitizedData = sanitizeData(data) as FlowchartData;
@@ -39,6 +42,9 @@ export const saveToLocalStorage = (data: FlowchartData): void => {
   }
 };
 
+/**
+ * Load flowchart data from local storage
+ */
 export const loadFromLocalStorage = (): FlowchartData | null => {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
@@ -55,6 +61,9 @@ export const loadFromLocalStorage = (): FlowchartData | null => {
   }
 };
 
+/**
+ * Generate a shareable link for the flowchart
+ */
 export const generateShareableLink = (data: FlowchartData): string => {
   try {
     const sanitizedData = sanitizeData(data) as FlowchartData;
@@ -73,6 +82,9 @@ export const generateShareableLink = (data: FlowchartData): string => {
   }
 };
 
+/**
+ * Load flowchart data from a shareable link
+ */
 export const loadFromShareableLink = (): FlowchartData | null => {
   try {
     const hash = window.location.hash;
