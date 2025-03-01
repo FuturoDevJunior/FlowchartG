@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
+import React, { useEffect, useRef, useState, lazy, Suspense, useCallback } from 'react';
 // Remove the direct import and use dynamic import later
 // import { FlowchartCanvas } from '../../lib/fabricCanvas';
 import { FlowchartData } from '../../types';
@@ -21,6 +21,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<FlowchartCanvasType | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const retryCountRef = useRef<number>(0);
   
   const [isConnecting, setIsConnecting] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -28,63 +29,133 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   const [flowchartData, setFlowchartData] = useState<FlowchartData | undefined>(initialData);
   const [showTutorial, setShowTutorial] = useState(!localStorage.getItem('tutorialSeen'));
   const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Simplificado - Initialize canvas
+  // Detect if user is on mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                    (window.innerWidth <= 768);
+      setIsMobile(mobile);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
+  // Simplified - Initialize canvas with retries
   useEffect(() => {
     setIsLoading(true);
+    setIsError(false);
     
     const initCanvas = async () => {
       if (canvasRef.current && containerRef.current && !fabricCanvasRef.current) {
-        // Dimensões com base no container
-        const containerWidth = containerRef.current.clientWidth || 800;
-        const containerHeight = containerRef.current.clientHeight || 500;
-        
-        // Definir tamanho do canvas
-        const canvasWidth = containerWidth - 20;
-        const canvasHeight = containerHeight - 20;
-        
-        // Definir dimensões visuais do elemento canvas
-        if (canvasRef.current) {
-          canvasRef.current.width = canvasWidth;
-          canvasRef.current.height = canvasHeight;
-          canvasRef.current.style.width = `${canvasWidth}px`;
-          canvasRef.current.style.height = `${canvasHeight}px`;
-        }
-        
         try {
-          // Dynamically import the FlowchartCanvas
-          const { FlowchartCanvas } = await import('../../lib/fabricCanvas');
+          // Get container dimensions
+          const containerWidth = containerRef.current.clientWidth || 800;
+          const containerHeight = containerRef.current.clientHeight || 500;
           
-          // Inicializar a classe FlowchartCanvas
-          fabricCanvasRef.current = new FlowchartCanvas(
-            'flowchart-canvas',
-            initialData,
-            handleFlowchartChange,
-            canvasWidth,
-            canvasHeight
-          );
+          // Set canvas size with slight padding
+          const canvasWidth = containerWidth - (isMobile ? 10 : 20);
+          const canvasHeight = containerHeight - (isMobile ? 10 : 20);
           
-          setIsLoading(false);
+          // Set visual dimensions of canvas element
+          if (canvasRef.current) {
+            canvasRef.current.width = canvasWidth;
+            canvasRef.current.height = canvasHeight;
+            canvasRef.current.style.width = `${canvasWidth}px`;
+            canvasRef.current.style.height = `${canvasHeight}px`;
+          }
+          
+          try {
+            // Dynamically import the FlowchartCanvas
+            const { FlowchartCanvas } = await import('../../lib/fabricCanvas');
+            
+            // Initialize FlowchartCanvas
+            fabricCanvasRef.current = new FlowchartCanvas(
+              'flowchart-canvas',
+              initialData,
+              handleFlowchartChange,
+              canvasWidth,
+              canvasHeight
+            );
+            
+            // Hook up resize handler
+            window.addEventListener('resize', handleResize);
+            
+            setIsLoading(false);
+          } catch (error) {
+            console.error("Error loading canvas:", error);
+            
+            // Try up to 3 times with increasing delay
+            if (retryCountRef.current < 3) {
+              retryCountRef.current++;
+              const delay = retryCountRef.current * 500;
+              console.log(`Retrying canvas initialization in ${delay}ms (attempt ${retryCountRef.current}/3)`);
+              
+              setTimeout(initCanvas, delay);
+            } else {
+              setIsError(true);
+              setIsLoading(false);
+            }
+          }
         } catch (error) {
-          console.error("Error loading canvas:", error);
+          console.error("Container error:", error);
+          setIsError(true);
           setIsLoading(false);
         }
       }
     };
     
-    // Dar tempo para o DOM renderizar
-    const timeoutId = setTimeout(initCanvas, 200);
+    // More delay for mobile devices which can be slower to initialize
+    const timeoutDelay = isMobile ? 500 : 200;
+    const timeoutId = setTimeout(initCanvas, timeoutDelay);
     
     return () => {
       clearTimeout(timeoutId);
+      window.removeEventListener('resize', handleResize);
+      
       if (fabricCanvasRef.current) {
-        fabricCanvasRef.current.destroy();
+        try {
+          fabricCanvasRef.current.destroy();
+        } catch (e) {
+          console.error("Error destroying canvas:", e);
+        }
         fabricCanvasRef.current = null;
       }
     };
-  }, [initialData]);
+  }, [initialData, isMobile]);
 
-  // Tutorial que desaparece
+  // Handle window resizing
+  const handleResize = useCallback(() => {
+    if (!containerRef.current || !fabricCanvasRef.current || !canvasRef.current) return;
+    
+    try {
+      const containerWidth = containerRef.current.clientWidth || 800;
+      const containerHeight = containerRef.current.clientHeight || 500;
+      
+      const canvasWidth = containerWidth - (isMobile ? 10 : 20);
+      const canvasHeight = containerHeight - (isMobile ? 10 : 20);
+      
+      // Update canvas element dimensions
+      canvasRef.current.width = canvasWidth;
+      canvasRef.current.height = canvasHeight;
+      canvasRef.current.style.width = `${canvasWidth}px`;
+      canvasRef.current.style.height = `${canvasHeight}px`;
+      
+      // Update fabric canvas
+      fabricCanvasRef.current.handleResize(canvasWidth, canvasHeight);
+    } catch (error) {
+      console.error("Error resizing canvas:", error);
+    }
+  }, [isMobile]);
+
+  // Tutorial that disappears
   useEffect(() => {
     if (showTutorial) {
       const timer = setTimeout(() => {
@@ -96,17 +167,22 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     }
   }, [showTutorial]);
 
-  const handleFlowchartChange = (data: FlowchartData) => {
+  const handleFlowchartChange = useCallback((data: FlowchartData) => {
     setFlowchartData(data);
-    // Salvar automaticamente
-    saveToLocalStorage(data);
-  };
+    // Save automatically
+    try {
+      saveToLocalStorage(data);
+    } catch (error) {
+      console.error("Error saving to localStorage:", error);
+      // Silent fail - don't bother user
+    }
+  }, []);
 
-  const handleAddNode = (type: 'rectangle' | 'circle' | 'diamond') => {
+  const handleAddNode = useCallback((type: 'rectangle' | 'circle' | 'diamond') => {
     if (!fabricCanvasRef.current || !canvasRef.current) return;
     
     try {
-      // Adicionar no centro do canvas
+      // Add in center of canvas
       const x = canvasRef.current.width / 2;
       const y = canvasRef.current.height / 2;
       
@@ -115,9 +191,9 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
       console.error("Error adding node:", error);
       alert("Erro ao adicionar forma. Tente novamente.");
     }
-  };
+  }, []);
 
-  const handleAddConnector = () => {
+  const handleAddConnector = useCallback(() => {
     if (!fabricCanvasRef.current) return;
     
     if (isConnecting) {
@@ -126,16 +202,26 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     } else {
       // Start connecting mode
       setIsConnecting(true);
-      alert('Clique no primeiro nó e depois no segundo nó para conectá-los');
+      
+      // Show different message for mobile vs desktop
+      if (isMobile) {
+        alert('Toque no primeiro nó e depois no segundo nó para conectá-los');
+      } else {
+        alert('Clique no primeiro nó e depois no segundo nó para conectá-los');
+      }
     }
-  };
+  }, [isConnecting, isMobile]);
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     if (!fabricCanvasRef.current) return;
-    fabricCanvasRef.current.deleteSelectedObjects();
-  };
+    try {
+      fabricCanvasRef.current.deleteSelectedObjects();
+    } catch (error) {
+      console.error("Error deleting objects:", error);
+    }
+  }, []);
 
-  const handleExport = (format: 'png' | 'svg') => {
+  const handleExport = useCallback((format: 'png' | 'svg') => {
     if (!fabricCanvasRef.current) return;
     
     try {
@@ -152,9 +238,9 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
       console.error(`Error exporting:`, error);
       alert(`Erro ao exportar. Tente novamente.`);
     }
-  };
+  }, []);
 
-  const handleShare = () => {
+  const handleShare = useCallback(() => {
     if (!fabricCanvasRef.current || !flowchartData) return;
     
     try {
@@ -165,9 +251,9 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
       console.error("Error generating shareable link:", error);
       alert("Erro ao gerar link compartilhável. Tente novamente.");
     }
-  };
+  }, [flowchartData]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!fabricCanvasRef.current || !flowchartData) return;
     
     try {
@@ -177,7 +263,59 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
       console.error("Error saving:", error);
       alert("Erro ao salvar. Tente novamente.");
     }
-  };
+  }, [flowchartData]);
+
+  const handleRetry = useCallback(() => {
+    retryCountRef.current = 0;
+    setIsError(false);
+    setIsLoading(true);
+    
+    // Force re-initialization
+    if (fabricCanvasRef.current) {
+      try {
+        fabricCanvasRef.current.destroy();
+      } catch (e) {
+        // Ignore errors
+      }
+      fabricCanvasRef.current = null;
+    }
+    
+    // Trigger re-render which will reinitialize
+    setTimeout(() => {
+      const init = async () => {
+        try {
+          // Dynamically import the FlowchartCanvas
+          const { FlowchartCanvas } = await import('../../lib/fabricCanvas');
+          
+          // Get container dimensions
+          const containerWidth = containerRef.current?.clientWidth || 800;
+          const containerHeight = containerRef.current?.clientHeight || 500;
+          
+          // Set canvas size with slight padding
+          const canvasWidth = containerWidth - (isMobile ? 10 : 20);
+          const canvasHeight = containerHeight - (isMobile ? 10 : 20);
+          
+          if (canvasRef.current) {
+            fabricCanvasRef.current = new FlowchartCanvas(
+              'flowchart-canvas',
+              initialData,
+              handleFlowchartChange,
+              canvasWidth,
+              canvasHeight
+            );
+            
+            setIsLoading(false);
+          }
+        } catch (error) {
+          console.error("Error during retry:", error);
+          setIsError(true);
+          setIsLoading(false);
+        }
+      };
+      
+      init();
+    }, 500);
+  }, [handleFlowchartChange, initialData, isMobile]);
 
   return (
     <div className="flex flex-col h-full">
@@ -189,23 +327,27 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
         onShare={handleShare}
         onSave={handleSave}
         isConnecting={isConnecting}
-        disabled={isLoading}
+        disabled={isLoading || isError}
+        isMobile={isMobile}
       />
       
       <div 
         ref={containerRef}
         className="flex-1 flex items-center justify-center p-4 bg-gray-100 overflow-hidden"
-        style={{ minHeight: '70vh' }}
+        style={{ 
+          minHeight: isMobile ? '60vh' : '70vh',
+          height: isMobile ? 'calc(var(--vh, 1vh) * 80)' : 'auto'
+        }}
       >
         <div className="relative border-2 border-gray-400 rounded-lg shadow-lg bg-white" 
-             style={{ 
-               width: '95%', 
-               height: '95%', 
-               maxWidth: '1600px', 
-               maxHeight: '800px',
-               position: 'relative',
-               overflow: 'hidden'
-             }}>
+          style={{ 
+            width: '95%', 
+            height: '95%', 
+            maxWidth: '1600px', 
+            maxHeight: '800px',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
           <canvas
             ref={canvasRef}
             id="flowchart-canvas"
@@ -226,10 +368,34 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
               </div>
             </div>
           )}
+          
+          {isError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white z-20">
+              <div className="text-center max-w-md p-6">
+                <div className="w-16 h-16 mx-auto mb-4 text-red-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div className="text-xl text-gray-700 mb-4">Não foi possível carregar o editor</div>
+                <p className="text-gray-600 mb-4">
+                  {isMobile 
+                    ? "Alguns dispositivos móveis podem ter limitações com o canvas. Tente utilizar um dispositivo com mais memória ou um computador." 
+                    : "Ocorreu um erro ao inicializar o canvas. Isso pode ser devido a recursos limitados do navegador."}
+                </p>
+                <button 
+                  onClick={handleRetry}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                >
+                  Tentar Novamente
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         
-        {showTutorial && !isLoading && (
-          <div className="absolute top-24 right-8 bg-black bg-opacity-80 text-white p-4 rounded-lg shadow-lg z-30 max-w-md">
+        {showTutorial && !isLoading && !isError && (
+          <div className={`absolute ${isMobile ? 'bottom-20 left-4 right-4' : 'top-24 right-8'} bg-black bg-opacity-80 text-white p-4 rounded-lg shadow-lg z-30 max-w-md`}>
             <h3 className="font-bold mb-2">Como usar:</h3>
             <ol className="list-decimal pl-5 space-y-1 text-sm">
               <li>Clique em "Retângulo", "Círculo" ou "Losango" para adicionar um nó</li>

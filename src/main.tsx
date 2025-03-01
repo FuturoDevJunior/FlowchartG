@@ -1,56 +1,57 @@
-// Import polyfill first
+// Import polyfills first for cross-browser compatibility
 import './lib/fabricPolyfill';
-import React, { lazy, Suspense } from 'react';
+
+// Core React imports
+import React, { lazy, Suspense, StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
-// Import CSS normally as it's small
+
+// Environment validation
+import { checkRequiredEnvVars } from './lib/envCheck';
+
+// Styles - loaded eagerly as they're small and critical
 import './index.css';
 
-// Lazy load the App component
-const App = lazy(() => import('./App.tsx'));
+// Lazy-loaded component for better performance
+const App = lazy(() => import('./App'));
 
-// Loading component to show while App is loading
+// Loading component that displays while App is loading
 const Loading = () => (
-  <div style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    width: '100vw',
-    backgroundColor: '#f5f5f5'
-  }}>
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ 
-        width: '40px', 
-        height: '40px', 
-        border: '4px solid #ccc',
-        borderTopColor: '#3498db',
-        borderRadius: '50%',
-        margin: '0 auto 20px',
-        animation: 'spin 1s linear infinite'
-      }}></div>
-      <p style={{ fontFamily: 'system-ui, sans-serif', color: '#333' }}>
-        Carregando FlowchartG...
+  <div className="app-loading-container">
+    <div className="app-loading-spinner" />
+    <p className="app-loading-text">Carregando FlowchartG...</p>
+  </div>
+);
+
+// Error component for environment configuration issues
+const EnvironmentError = () => (
+  <div className="app-error-container">
+    <div className="app-error-content">
+      <h2 className="app-error-title">Erro de Configuração</h2>
+      <p className="app-error-message">
+        O aplicativo não pôde iniciar devido a um problema de configuração.
+        Verifique se todas as variáveis de ambiente estão configuradas corretamente.
+      </p>
+      <p className="app-error-details">
+        Se você é o administrador do sistema, verifique o console para mais detalhes.
       </p>
     </div>
   </div>
 );
 
-// Add loading animation
-document.head.insertAdjacentHTML(
-  'beforeend',
-  `<style>
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>`
-);
+// Check if environment is properly configured
+const isConfigValid = checkRequiredEnvVars();
 
-// Render the application with suspense
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <Suspense fallback={<Loading />}>
-      <App />
-    </Suspense>
-  </React.StrictMode>,
-);
+// Render the application
+const root = ReactDOM.createRoot(document.getElementById('root')!);
+
+if (isConfigValid) {
+  root.render(
+    <StrictMode>
+      <Suspense fallback={<Loading />}>
+        <App />
+      </Suspense>
+    </StrictMode>
+  );
+} else {
+  root.render(<EnvironmentError />);
+}

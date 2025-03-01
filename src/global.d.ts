@@ -1,11 +1,17 @@
-// Declarações de tipos globais para nossa aplicação
+/**
+ * Global type declarations for FlowchartG application
+ */
 
-// Estendendo o Window para incluir objetos globais necessários
+// Extend Window interface with our global methods
 interface Window {
-  ensureCanvasReady?: () => void;
+  /**
+   * Ensures the canvas is properly configured for the current browser environment
+   * @returns {boolean} True if initialization is successful
+   */
+  ensureCanvasReady?: () => boolean;
 }
 
-// Tipos para auxiliar na criação de flowcharts
+// Namespace for all flowchart-related types
 declare namespace FlowchartTypes {
   interface Position {
     x: number;
@@ -34,7 +40,7 @@ declare namespace FlowchartTypes {
   }
 }
 
-// Tipagem para fabric.js
+// Type definitions for fabric.js
 declare module 'fabric' {
   export interface IEvent {
     e: Event;
@@ -48,6 +54,17 @@ declare module 'fabric' {
   }
   
   export interface Object {
-    data?: any;
+    /**
+     * Custom data property to store application-specific metadata
+     */
+    data?: {
+      id?: string;
+      type?: string;
+      nodeType?: string;
+      from?: string;
+      to?: string;
+      text?: string;
+      [key: string]: any;
+    };
   }
 } 

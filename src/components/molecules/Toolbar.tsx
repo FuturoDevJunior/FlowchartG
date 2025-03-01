@@ -11,6 +11,7 @@ interface ToolbarProps {
   onSave: () => void;
   isConnecting: boolean;
   disabled?: boolean;
+  isMobile?: boolean;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -21,12 +22,26 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onShare,
   onSave,
   isConnecting,
-  disabled = false
+  disabled = false,
+  isMobile = false
 }) => {
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
 
+  // Only show tooltips on desktop
+  const handleMouseEnter = (id: string) => {
+    if (!isMobile) {
+      setShowTooltip(id);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isMobile) {
+      setShowTooltip(null);
+    }
+  };
+
   const Tooltip = ({ id, children }: { id: string, children: React.ReactNode }) => {
-    if (showTooltip !== id) return null;
+    if (showTooltip !== id || isMobile) return null;
     return (
       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded whitespace-nowrap">
         {children}
@@ -34,20 +49,24 @@ const Toolbar: React.FC<ToolbarProps> = ({
     );
   };
 
+  // Use smaller icons and more compact UI on mobile
+  const iconSize = isMobile ? 18 : 20;
+  const buttonClass = `text-white hover:bg-gray-700 ${isMobile ? 'px-1.5 py-1' : ''}`;
+
   return (
-    <div className="bg-[#1A1A1A] p-2 flex flex-wrap items-center justify-between border-b border-gray-700">
+    <div className={`bg-[#1A1A1A] ${isMobile ? 'p-1' : 'p-2'} flex flex-wrap items-center justify-between border-b border-gray-700`}>
       <div className="flex items-center space-x-1 md:space-x-2">
         <div className="relative">
           <Button
             variant="ghost"
             onClick={() => onAddNode('rectangle')}
-            className="text-white hover:bg-gray-700"
-            onMouseEnter={() => setShowTooltip('rect')}
-            onMouseLeave={() => setShowTooltip(null)}
+            className={buttonClass}
+            onMouseEnter={() => handleMouseEnter('rect')}
+            onMouseLeave={handleMouseLeave}
             disabled={disabled}
           >
-            <Square size={20} className="mr-1" />
-            <span className="hidden sm:inline">Retângulo</span>
+            <Square size={iconSize} className={isMobile ? '' : 'mr-1'} />
+            <span className={`${isMobile ? 'hidden' : 'hidden sm:inline'}`}>Retângulo</span>
           </Button>
           <Tooltip id="rect">Adicionar retângulo</Tooltip>
         </div>
@@ -56,13 +75,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <Button
             variant="ghost"
             onClick={() => onAddNode('circle')}
-            className="text-white hover:bg-gray-700"
-            onMouseEnter={() => setShowTooltip('circle')}
-            onMouseLeave={() => setShowTooltip(null)}
+            className={buttonClass}
+            onMouseEnter={() => handleMouseEnter('circle')}
+            onMouseLeave={handleMouseLeave}
             disabled={disabled}
           >
-            <Circle size={20} className="mr-1" />
-            <span className="hidden sm:inline">Círculo</span>
+            <Circle size={iconSize} className={isMobile ? '' : 'mr-1'} />
+            <span className={`${isMobile ? 'hidden' : 'hidden sm:inline'}`}>Círculo</span>
           </Button>
           <Tooltip id="circle">Adicionar círculo</Tooltip>
         </div>
@@ -71,13 +90,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <Button
             variant="ghost"
             onClick={() => onAddNode('diamond')}
-            className="text-white hover:bg-gray-700"
-            onMouseEnter={() => setShowTooltip('diamond')}
-            onMouseLeave={() => setShowTooltip(null)}
+            className={buttonClass}
+            onMouseEnter={() => handleMouseEnter('diamond')}
+            onMouseLeave={handleMouseLeave}
             disabled={disabled}
           >
-            <Diamond size={20} className="mr-1" />
-            <span className="hidden sm:inline">Losango</span>
+            <Diamond size={iconSize} className={isMobile ? '' : 'mr-1'} />
+            <span className={`${isMobile ? 'hidden' : 'hidden sm:inline'}`}>Losango</span>
           </Button>
           <Tooltip id="diamond">Adicionar losango</Tooltip>
         </div>
@@ -86,13 +105,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <Button
             variant="ghost"
             onClick={onAddConnector}
-            className={`text-white hover:bg-gray-700 ${isConnecting ? 'bg-green-800' : ''}`}
-            onMouseEnter={() => setShowTooltip('connect')}
-            onMouseLeave={() => setShowTooltip(null)}
+            className={`${buttonClass} ${isConnecting ? 'bg-green-800' : ''}`}
+            onMouseEnter={() => handleMouseEnter('connect')}
+            onMouseLeave={handleMouseLeave}
             disabled={disabled}
           >
-            <Link size={20} className="mr-1" />
-            <span className="hidden sm:inline">Conectar</span>
+            <Link size={iconSize} className={isMobile ? '' : 'mr-1'} />
+            <span className={`${isMobile ? 'hidden' : 'hidden sm:inline'}`}>Conectar</span>
           </Button>
           <Tooltip id="connect">{isConnecting ? 'Clique em dois nós para conectar' : 'Conectar dois nós'}</Tooltip>
         </div>
@@ -101,13 +120,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <Button
             variant="ghost"
             onClick={onDelete}
-            className="text-white hover:bg-gray-700"
-            onMouseEnter={() => setShowTooltip('delete')}
-            onMouseLeave={() => setShowTooltip(null)}
+            className={buttonClass}
+            onMouseEnter={() => handleMouseEnter('delete')}
+            onMouseLeave={handleMouseLeave}
             disabled={disabled}
           >
-            <Trash2 size={20} className="mr-1" />
-            <span className="hidden sm:inline">Apagar</span>
+            <Trash2 size={iconSize} className={isMobile ? '' : 'mr-1'} />
+            <span className={`${isMobile ? 'hidden' : 'hidden sm:inline'}`}>Apagar</span>
           </Button>
           <Tooltip id="delete">Apagar selecionados</Tooltip>
         </div>
@@ -118,13 +137,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <Button
             variant="ghost"
             onClick={() => onExport('png')}
-            className="text-white hover:bg-gray-700"
-            onMouseEnter={() => setShowTooltip('export')}
-            onMouseLeave={() => setShowTooltip(null)}
+            className={buttonClass}
+            onMouseEnter={() => handleMouseEnter('export')}
+            onMouseLeave={handleMouseLeave}
             disabled={disabled}
           >
-            <Download size={20} className="mr-1" />
-            <span className="hidden sm:inline">Exportar</span>
+            <Download size={iconSize} className={isMobile ? '' : 'mr-1'} />
+            <span className={`${isMobile ? 'hidden' : 'hidden sm:inline'}`}>Exportar</span>
           </Button>
           <Tooltip id="export">Exportar como PNG</Tooltip>
         </div>
@@ -133,13 +152,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <Button
             variant="ghost"
             onClick={onShare}
-            className="text-white hover:bg-gray-700"
-            onMouseEnter={() => setShowTooltip('share')}
-            onMouseLeave={() => setShowTooltip(null)}
+            className={buttonClass}
+            onMouseEnter={() => handleMouseEnter('share')}
+            onMouseLeave={handleMouseLeave}
             disabled={disabled}
           >
-            <Share2 size={20} className="mr-1" />
-            <span className="hidden sm:inline">Compartilhar</span>
+            <Share2 size={iconSize} className={isMobile ? '' : 'mr-1'} />
+            <span className={`${isMobile ? 'hidden' : 'hidden sm:inline'}`}>Compartilhar</span>
           </Button>
           <Tooltip id="share">Compartilhar via URL</Tooltip>
         </div>
@@ -149,15 +168,17 @@ const Toolbar: React.FC<ToolbarProps> = ({
             variant="primary"
             onClick={() => {
               onSave();
-              setShowTooltip('saved');
-              setTimeout(() => setShowTooltip(null), 2000);
+              if (!isMobile) {
+                setShowTooltip('saved');
+                setTimeout(() => setShowTooltip(null), 2000);
+              }
             }}
-            onMouseEnter={() => setShowTooltip('save')}
-            onMouseLeave={() => showTooltip !== 'saved' && setShowTooltip(null)}
+            onMouseEnter={() => handleMouseEnter('save')}
+            onMouseLeave={() => showTooltip !== 'saved' && handleMouseLeave()}
             disabled={disabled}
           >
-            <Save size={20} className="mr-1" />
-            <span className="hidden sm:inline">Salvar</span>
+            <Save size={iconSize} className={isMobile ? '' : 'mr-1'} />
+            <span className={`${isMobile ? 'hidden' : 'hidden sm:inline'}`}>Salvar</span>
           </Button>
           <Tooltip id="save">Salvar localmente</Tooltip>
           <Tooltip id="saved">✓ Salvo com sucesso!</Tooltip>

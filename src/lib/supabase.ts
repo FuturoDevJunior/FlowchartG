@@ -1,44 +1,31 @@
-// @ts-ignore
 import { createClient } from '@supabase/supabase-js';
 import { FlowchartData, User } from '../types';
 
-// Hardcoded values - ATENÇÃO: Em uma aplicação real, use variáveis de ambiente
-// Estas credenciais já estavam no .env, então não são novas exposições
-const SUPABASE_URL = 'https://elszktnjwhhbxrfteifr.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsc3prdG5qd2hoYnhyZnRlaWZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA4MzY5NDMsImV4cCI6MjA1NjQxMjk0M30.-xWrZ0HJJ9BQh4X4b2MMgpMXUMvj2gT-XTk4ECle0Xc';
+// Get environment variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Tentar obter das variáveis de ambiente primeiro
-const supabaseUrl = typeof import.meta.env !== 'undefined' && import.meta.env.VITE_SUPABASE_URL 
-  ? import.meta.env.VITE_SUPABASE_URL 
-  : SUPABASE_URL;
+// Validate environment variables
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing Supabase environment variables. Please check your .env file.');
+}
 
-const supabaseAnonKey = typeof import.meta.env !== 'undefined' && import.meta.env.VITE_SUPABASE_ANON_KEY 
-  ? import.meta.env.VITE_SUPABASE_ANON_KEY 
-  : SUPABASE_ANON_KEY;
-
-// Log das informações para depuração
-console.log('Ambiente:', typeof import.meta.env !== 'undefined' ? import.meta.env.MODE : 'desconhecido');
-console.log('Usando URL hardcoded:', supabaseUrl === SUPABASE_URL);
-console.log('Usando KEY hardcoded:', supabaseAnonKey === SUPABASE_ANON_KEY);
-
-// Criar cliente Supabase com os valores disponíveis
+// Create Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Função para verificar conectividade com o Supabase
+// Check Supabase connection
 export const checkSupabaseConnection = async (): Promise<boolean> => {
   try {
-    // Tentamos uma operação simples para verificar se a conexão está OK
     const { error } = await supabase.from('flowcharts').select('count').limit(1);
     
     if (error) {
-      console.error('Erro ao conectar com o Supabase:', error.message);
+      console.error('Error connecting to Supabase:', error.message);
       return false;
     }
     
-    console.log('✅ Conexão com Supabase estabelecida com sucesso');
     return true;
   } catch (err) {
-    console.error('Erro ao tentar conectar com o Supabase:', err);
+    console.error('Error connecting to Supabase:', err);
     return false;
   }
 };
@@ -128,7 +115,6 @@ export const getUserFlowcharts = async (): Promise<{ data: FlowchartData[] | nul
     return { data: null, error };
   }
 
-  // Tipando o parâmetro item
   interface FlowchartItem {
     id: string;
     name: string;
