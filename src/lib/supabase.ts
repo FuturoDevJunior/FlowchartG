@@ -6,17 +6,43 @@ import { FlowchartData, User } from '../types';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// Log detalhado no ambiente de desenvolvimento
+if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
+  console.log('Ambiente:', import.meta.env.MODE);
+  console.log('Supabase URL configurada:', !!supabaseUrl);
+  console.log('Supabase Key configurada:', !!supabaseAnonKey);
+}
+
 // Verificar se as variáveis de ambiente estão definidas
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error(
-    'Variáveis de ambiente do Supabase não encontradas. Certifique-se de configurar VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no arquivo .env'
+    'Variáveis de ambiente do Supabase não encontradas. Certifique-se de configurar VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no arquivo .env ou nas variáveis de ambiente do Vercel'
   );
 }
 
+// Criação do cliente com fallback para valores vazios (para evitar erros de runtime)
 export const supabase = createClient(
-  supabaseUrl || '',
+  supabaseUrl || 'https://elszktnjwhhbxrfteifr.supabase.co',
   supabaseAnonKey || ''
 );
+
+// Função para verificar conectividade com o Supabase
+export const checkSupabaseConnection = async (): Promise<boolean> => {
+  try {
+    const { error } = await supabase.from('flowcharts').select('count').limit(1);
+    
+    if (error) {
+      console.error('Erro ao conectar com o Supabase:', error.message);
+      return false;
+    }
+    
+    console.log('✅ Conexão com Supabase estabelecida com sucesso');
+    return true;
+  } catch (err) {
+    console.error('Erro ao tentar conectar com o Supabase:', err);
+    return false;
+  }
+};
 
 // Authentication functions
 export const signInWithEmail = async (email: string): Promise<{ error: Error | null }> => {
