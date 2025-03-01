@@ -1,36 +1,21 @@
+// @ts-ignore
 import { createClient } from '@supabase/supabase-js';
 import { FlowchartData, User } from '../types';
-
-// Tipagem para o ImportMeta
-declare global {
-  interface ImportMeta {
-    env: {
-      DEV: boolean;
-      VITE_SUPABASE_URL: string;
-      VITE_SUPABASE_ANON_KEY: string;
-    };
-  }
-}
 
 // Initialize Supabase client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Log para depuração em ambiente de desenvolvimento
-if (import.meta.env.DEV) {
-  console.log('Supabase URL:', supabaseUrl ? 'Configurado' : 'Não configurado');
-  console.log('Supabase Anon Key:', supabaseAnonKey ? 'Configurado' : 'Não configurado');
-}
-
 // Verificar se as variáveis de ambiente estão definidas
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Erro: Variáveis de ambiente do Supabase não estão configuradas corretamente.');
-  console.error('Verifique se VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY estão definidas no ambiente.');
+  console.error(
+    'Variáveis de ambiente do Supabase não encontradas. Certifique-se de configurar VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no arquivo .env'
+  );
 }
 
 export const supabase = createClient(
-  supabaseUrl || 'https://elszktnjwhhbxrfteifr.supabase.co',
-  supabaseAnonKey || 'fallback_key_apenas_para_evitar_erros_de_inicializacao'
+  supabaseUrl || '',
+  supabaseAnonKey || ''
 );
 
 // Authentication functions
@@ -118,7 +103,19 @@ export const getUserFlowcharts = async (): Promise<{ data: FlowchartData[] | nul
     return { data: null, error };
   }
 
-  const flowcharts: FlowchartData[] = data.map((item) => ({
+  // Tipando o parâmetro item
+  interface FlowchartItem {
+    id: string;
+    name: string;
+    data: {
+      nodes: any[];
+      connectors: any[];
+    };
+    created_at: string;
+    updated_at: string;
+  }
+
+  const flowcharts: FlowchartData[] = data.map((item: FlowchartItem) => ({
     id: item.id,
     name: item.name,
     nodes: item.data.nodes,

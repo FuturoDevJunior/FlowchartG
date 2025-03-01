@@ -1,5 +1,7 @@
+// @ts-ignore
 import { fabric } from 'fabric';
 import { FlowchartNode, FlowchartConnector, FlowchartData } from '../types';
+// @ts-ignore
 import { nanoid } from 'nanoid';
 
 export class FlowchartCanvas {
@@ -511,7 +513,7 @@ export class FlowchartCanvas {
     if (activeObjects.length === 0) return;
     
     // Remove os objetos selecionados
-    activeObjects.forEach((obj) => {
+    activeObjects.forEach((obj: fabric.Object) => {
       // Se for um nó, remover também os conectores associados
       if (obj.data?.type === 'node') {
         const nodeId = obj.data.id;
