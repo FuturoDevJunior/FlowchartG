@@ -41,9 +41,15 @@ export class FlowchartCanvas {
     window.addEventListener('resize', this.handleResize);
   }
 
-  private handleResize = (): void => {
-    this.canvas.setWidth(window.innerWidth);
-    this.canvas.setHeight(window.innerHeight - 100);
+  public handleResize = (): void => {
+    const parent = this.canvas.getElement().parentElement;
+    if (parent) {
+      this.canvas.setWidth(parent.clientWidth);
+      this.canvas.setHeight(parent.clientHeight);
+    } else {
+      this.canvas.setWidth(window.innerWidth);
+      this.canvas.setHeight(window.innerHeight - 100);
+    }
     this.canvas.renderAll();
   };
 
