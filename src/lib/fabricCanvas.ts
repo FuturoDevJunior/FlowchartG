@@ -1061,4 +1061,120 @@ export class FlowchartCanvas {
       return null;
     }
   }
+
+  /**
+   * Clears all nodes and connectors from the canvas
+   */
+  public clearAll(): void {
+    try {
+      // Remove all connectors
+      const connectorIds = Array.from(this.connectors.keys());
+      connectorIds.forEach(id => {
+        this.removeConnector(id);
+      });
+      
+      // Remove all nodes
+      const nodeIds = Array.from(this.nodes.keys());
+      nodeIds.forEach(id => {
+        this.removeNode(id);
+      });
+      
+      // Reset zoom and pan
+      if (this.canvas.viewportTransform) {
+        this.setZoom(1.0);
+        this.canvas.viewportTransform[4] = 0;
+        this.canvas.viewportTransform[5] = 0;
+      }
+      
+      // Trigger change callback with empty data
+      if (this.onChangeCallback) {
+        const emptyData: FlowchartData = {
+          id: nanoid(),
+          name: 'Novo Fluxograma',
+          nodes: [],
+          connectors: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        this.onChangeCallback(emptyData);
+      }
+      
+      // Render
+      this.canvas.requestRenderAll();
+    } catch (error) {
+      console.error("Error clearing canvas:", error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Highlights a node (visual feedback for connection mode)
+   * @param nodeId The ID of the node to highlight
+   * @param highlight Whether to highlight or unhighlight
+   */
+  public highlightNode(nodeId: string, highlight: boolean): void {
+    try {
+      const node = this.nodes.get(nodeId);
+      if (!node) return;
+      
+      if (highlight) {
+        // Store original properties if not already stored
+        if (!node.data.originalStroke) {
+          node.data.originalStroke = node.stroke || '#000000';
+          node.data.originalStrokeWidth = node.strokeWidth || 2;
+        }
+        
+        // Apply highlight effect with animation
+        node.set({
+          stroke: '#FF3D00', // Bright orange
+          strokeWidth: 4
+        });
+        
+        // Animate a pulse effect
+        let pulseCount = 0;
+        const maxPulses = 3;
+        
+        const pulseAnimation = () => {
+          if (pulseCount >= maxPulses) {
+            // Reset to normal highlighted state
+            node.set({ strokeWidth: 4 });
+            this.canvas.requestRenderAll();
+            return;
+          }
+          
+          // Pulse out
+          node.set({ strokeWidth: 6 });
+          this.canvas.requestRenderAll();
+          
+          setTimeout(() => {
+            // Pulse in
+            node.set({ strokeWidth: 4 });
+            this.canvas.requestRenderAll();
+            
+            pulseCount++;
+            setTimeout(pulseAnimation, 300);
+          }, 300);
+        };
+        
+        // Start pulse animation
+        pulseAnimation();
+      } else {
+        // Restore original properties
+        if (node.data.originalStroke) {
+          node.set({
+            stroke: node.data.originalStroke,
+            strokeWidth: node.data.originalStrokeWidth
+          });
+          
+          // Clean up stored properties
+          delete node.data.originalStroke;
+          delete node.data.originalStrokeWidth;
+        }
+      }
+      
+      this.canvas.requestRenderAll();
+    } catch (error) {
+      console.error("Error highlighting node:", error);
+    }
+  }
 }

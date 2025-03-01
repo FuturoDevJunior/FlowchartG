@@ -2,9 +2,8 @@
 
 interface ImportMeta {
   readonly env: {
-    readonly VITE_SUPABASE_URL: string;
-    readonly VITE_SUPABASE_ANON_KEY: string;
-    readonly VITE_SUPABASE_SERVICE_ROLE_KEY?: string;
+    readonly VITE_LOCAL_STORAGE_KEY: string;
+    readonly VITE_APP_VERSION: string;
     readonly MODE: string;
     readonly DEV: boolean;
     readonly PROD: boolean;

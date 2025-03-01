@@ -11,6 +11,7 @@ Este documento detalha as melhorias implementadas no FlowchartG para aumentar se
 - ✅ **Polyfills Inteligentes**: Detecção de recursos e carregamento apenas quando necessário
 - ✅ **Configuração de Cache**: Implementação de estratégias de cache otimizadas via Vercel
 - ✅ **Rendering Otimizado**: Minimização de re-renderizações com React.memo e useCallback
+- ✅ **Dependências Reduzidas**: Remoção de componentes não utilizados e suas dependências
 
 ### Compatibilidade Universal
 - ✅ **Mobile-First**: Interface adaptativa para todos os tamanhos de tela
@@ -18,6 +19,7 @@ Este documento detalha as melhorias implementadas no FlowchartG para aumentar se
 - ✅ **Touch Events**: Otimizações para eventos de toque em dispositivos móveis
 - ✅ **Compatibilidade Cross-Browser**: Suporte aos principais navegadores modernos
 - ✅ **Detecção de Ambiente**: Adaptação automática às capacidades do dispositivo/navegador
+- ✅ **Offline First**: Funcionalidade completa mesmo sem conexão à internet
 
 ### Segurança
 - ✅ **Variáveis de Ambiente**: Proteção adequada de credenciais e configurações
@@ -25,6 +27,7 @@ Este documento detalha as melhorias implementadas no FlowchartG para aumentar se
 - ✅ **Headers de Segurança**: X-Frame-Options, X-Content-Type-Options e outros
 - ✅ **Sanitização de Dados**: Uso de DOMPurify para sanitizar inputs e dados
 - ✅ **Permissões Restritas**: Limitação de acesso a APIs sensíveis do navegador
+- ✅ **Armazenamento Local Seguro**: Sanitização e validação de todos os dados armazenados
 
 ### Manutenibilidade
 - ✅ **Estrutura Clara**: Organização de componentes por funcionalidade
@@ -32,6 +35,7 @@ Este documento detalha as melhorias implementadas no FlowchartG para aumentar se
 - ✅ **Tratamento de Erros**: Implementação de fallbacks e recuperação de erros
 - ✅ **Documentação**: Código bem documentado e comentado
 - ✅ **Convenções de Nomeação**: Nomenclatura consistente em todo o código
+- ✅ **CI/CD**: Integração contínua e deploy automático via GitHub Actions
 
 ## Melhorias Técnicas Específicas
 
@@ -41,6 +45,7 @@ Este documento detalha as melhorias implementadas no FlowchartG para aumentar se
 - ✅ Implementação de estratégia de retry para inicialização do canvas
 - ✅ Implementação de detecção de dispositivo móvel para UX adaptativa
 - ✅ Correção de problemas de redimensionamento do canvas
+- ✅ Remoção de dependências desnecessárias (Supabase, Auth) para simplificação
 
 ### Build e Deploy
 - ✅ Configuração otimizada do Vite para produção
@@ -48,6 +53,7 @@ Este documento detalha as melhorias implementadas no FlowchartG para aumentar se
 - ✅ Remoção de console.logs em produção
 - ✅ Divisão de chunks para melhor caching
 - ✅ Configuração de headers para performance no Vercel
+- ✅ Workflow de CI/CD otimizado para deploy rápido e confiável
 
 ### UX/UI
 - ✅ Implementação de loaders animados durante a inicialização
@@ -55,6 +61,7 @@ Este documento detalha as melhorias implementadas no FlowchartG para aumentar se
 - ✅ UI adaptativa para diferentes tamanhos de tela
 - ✅ Tratamento específico para inputs de touch vs. mouse
 - ✅ Tutorial contextual para novos usuários
+- ✅ Toast notifications para feedback de operações
 
 ## Plano de Melhorias Futuras
 
@@ -62,16 +69,25 @@ Este documento detalha as melhorias implementadas no FlowchartG para aumentar se
 - [ ] Implementação de Web Workers para operações pesadas do canvas
 - [ ] Otimização adicional de renderização para diagramas complexos
 - [ ] Implementação de virtualização para grandes diagramas
+- [ ] Caching seletivo de operações frequentes do canvas
+- [ ] Progressively Enhanced SVG export
 
 ### Funcionalidades
-- [ ] Suporte a temas (claro/escuro)
-- [ ] Mais tipos de nós e conectores
-- [ ] Sistema de templates de diagramas
-- [ ] Histórico de alterações (undo/redo)
-- [ ] Exportação para formatos adicionais
+- [ ] Suporte a temas (claro/escuro) com transição suave
+- [ ] Mais tipos de nós e conectores customizáveis
+- [ ] Sistema de templates de diagramas para casos de uso comuns
+- [ ] Histórico de alterações robusto (undo/redo) com timeline visual
+- [ ] Exportação para formatos adicionais (PDF, DOCX, PPTX)
+- [ ] Auto-layout para organização automática de diagramas
+- [ ] Integração com APIs externas para importação/exportação de dados
+- [ ] Colaboração em tempo real via WebRTC (peer-to-peer)
+- [ ] Sistema de anotações e comentários em nós
 
 ### Infraestrutura
-- [ ] Implementação de testes E2E
+- [ ] Implementação de testes E2E com Cypress
 - [ ] Ampliação da cobertura de testes unitários
-- [ ] CI/CD para implantação automática
-- [ ] Monitoramento de erros em produção 
+- [ ] Monitoramento de erros em produção com relatórios anônimos
+- [ ] Análise de performance com Core Web Vitals
+- [ ] PWA com suporte a instalação e notificações
+- [ ] Internacionalização (i18n) para múltiplos idiomas
+- [ ] Aplicação incremental de atualizações com versionamento 

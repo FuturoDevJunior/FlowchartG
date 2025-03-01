@@ -52,6 +52,8 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   const [isError, setIsError] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
 
   // Detect if user is on mobile device
   useEffect(() => {
@@ -388,16 +390,39 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     }, 500);
   }, [handleFlowchartChange, initialData, isMobile]);
 
-  // Handler para selecionar nós para conexão
+  // Novo método para limpar toda a tela
+  const handleClearAll = useCallback(() => {
+    if (!fabricCanvasRef.current) return;
+    
+    try {
+      // Confirmar com o usuário antes de limpar tudo
+      if (window.confirm('Tem certeza que deseja limpar toda a tela? Esta ação não pode ser desfeita.')) {
+        fabricCanvasRef.current.clearAll();
+        
+        // Resetar o estado de conexão se estiver ativo
+        if (isConnecting) {
+          setIsConnecting(false);
+          setSelectedNodeId(null);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao limpar a tela:", error);
+    }
+  }, [isConnecting]);
+
+  // Handler para selecionar nós para conexão - versão melhorada
   useEffect(() => {
-    if (!fabricCanvasRef.current || !isConnecting) return;
+    if (!fabricCanvasRef.current) return;
     
     // Handler para selecionar nós para conexão
     const handleNodeSelection = (e: MouseEvent | TouchEvent) => {
-      if (!fabricCanvasRef.current) return;
+      if (!fabricCanvasRef.current || !isConnecting) return;
       
       try {
-        // Usar o novo método para identificar nós
+        // Impedir propagação para evitar conflitos com outros handlers
+        e.stopPropagation();
+        
+        // Usar o método para identificar nós
         const nodeInfo = fabricCanvasRef.current.getNodeFromEvent(e);
         
         if (nodeInfo) {
@@ -406,17 +431,43 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
           if (!selectedNodeId) {
             // Primeiro nó selecionado
             setSelectedNodeId(nodeId);
+            
+            // Feedback visual - piscar o nó selecionado
+            if (fabricCanvasRef.current) {
+              fabricCanvasRef.current.highlightNode(nodeId, true);
+              
+              // Mostrar mensagem de orientação
+              setToastMessage('Agora selecione o nó de destino');
+              setShowToast(true);
+              setTimeout(() => setShowToast(false), 3000);
+            }
           } else if (selectedNodeId !== nodeId) {
             // Segundo nó selecionado, criar conector
             fabricCanvasRef.current.addConnector(selectedNodeId, nodeId);
             
+            // Feedback visual
+            fabricCanvasRef.current.highlightNode(selectedNodeId, false);
+            
             // Limpar seleção e sair do modo de conexão
             setSelectedNodeId(null);
             setIsConnecting(false);
+            
+            // Feedback de sucesso
+            setToastMessage('Conexão criada com sucesso!');
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 2000);
           }
         }
       } catch (error) {
-        // Capturar erros específicos silenciosamente para não interromper a experiência 
+        // Feedback de erro
+        setToastMessage('Erro ao criar conexão. Tente novamente.');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+        
+        // Limpar estado
+        setSelectedNodeId(null);
+        setIsConnecting(false);
+        
         console.error("Error selecting node:", error);
       }
     };
@@ -434,7 +485,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
         canvasElement.removeEventListener('touchstart', handleNodeSelection);
       }
     };
-  }, [isConnecting, selectedNodeId, fabricCanvasRef]);
+  }, [isConnecting, selectedNodeId]);
 
   // Função para destacar nós durante o modo de conexão
   useEffect(() => {
@@ -511,18 +562,26 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   }, [isConnecting, selectedNodeId, fabricCanvasRef]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="h-full flex flex-col bg-gray-50">
       <Toolbar
         onAddNode={handleAddNode}
         onAddConnector={handleAddConnector}
         onDelete={handleDelete}
+        onClearAll={handleClearAll}
         onExport={handleExport}
         onShare={handleShare}
         onSave={handleSave}
         isConnecting={isConnecting}
-        disabled={isLoading || isError}
+        disabled={!fabricCanvasRef.current || isLoading || isError}
         isMobile={isMobile}
       />
+      
+      {/* Toast notification for feedback */}
+      {showToast && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-md bg-blue-600 text-white shadow-lg z-50 animate-fadeIn">
+          {toastMessage}
+        </div>
+      )}
       
       {isConnecting && (
         <div className="bg-blue-600 text-white px-4 py-3 shadow-md">

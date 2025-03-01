@@ -36,7 +36,6 @@ export const saveToLocalStorage = (data: FlowchartData): void => {
   } catch (error) {
     // In production, we would log this to a monitoring service
     if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
       console.error('Error saving to localStorage:', error);
     }
   }
@@ -54,7 +53,6 @@ export const loadFromLocalStorage = (): FlowchartData | null => {
   } catch (error) {
     // In production, we would log this to a monitoring service
     if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
       console.error('Error loading from localStorage:', error);
     }
     return null;
@@ -75,7 +73,6 @@ export const generateShareableLink = (data: FlowchartData): string => {
   } catch (error) {
     // In production, we would log this to a monitoring service
     if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
       console.error('Error generating shareable link:', error);
     }
     return window.location.href;
@@ -97,7 +94,6 @@ export const loadFromShareableLink = (): FlowchartData | null => {
   } catch (error) {
     // In production, we would log this to a monitoring service
     if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
       console.error('Error loading from shareable link:', error);
     }
     return null;

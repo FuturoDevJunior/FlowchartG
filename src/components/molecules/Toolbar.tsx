@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Square, Circle, Diamond, Link, Download, Share2, Trash2, Save, Info } from 'lucide-react';
+import { Square, Circle, Diamond, Link, Download, Share2, Trash2, Save, Trash } from 'lucide-react';
 import Button from '../atoms/Button';
 
 interface ToolbarProps {
   onAddNode: (type: 'rectangle' | 'circle' | 'diamond') => void;
   onAddConnector: () => void;
   onDelete: () => void;
+  onClearAll: () => void;
   onExport: (format: 'png' | 'svg') => void;
   onShare: () => void;
   onSave: () => void;
@@ -18,6 +19,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onAddNode,
   onAddConnector,
   onDelete,
+  onClearAll,
   onExport,
   onShare,
   onSave,
@@ -129,6 +131,21 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <span className={`${isMobile ? 'hidden' : 'hidden sm:inline'}`}>Apagar</span>
           </Button>
           <Tooltip id="delete">Apagar selecionados</Tooltip>
+        </div>
+        
+        <div className="relative">
+          <Button
+            variant="ghost"
+            onClick={onClearAll}
+            className={`${buttonClass} hover:bg-red-800`}
+            onMouseEnter={() => handleMouseEnter('clearAll')}
+            onMouseLeave={handleMouseLeave}
+            disabled={disabled}
+          >
+            <Trash size={iconSize} className={isMobile ? '' : 'mr-1'} />
+            <span className={`${isMobile ? 'hidden' : 'hidden sm:inline'}`}>Limpar</span>
+          </Button>
+          <Tooltip id="clearAll">Limpar toda a tela</Tooltip>
         </div>
       </div>
       
