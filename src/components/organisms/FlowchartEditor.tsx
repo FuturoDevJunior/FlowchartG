@@ -5,6 +5,7 @@ import Toolbar from '../molecules/Toolbar';
 import ShareModal from '../molecules/ShareModal';
 import { saveToLocalStorage, generateShareableLink } from '../../lib/storage';
 import Watermark from '../atoms/Watermark';
+import FallbackCanvas from '../atoms/FallbackCanvas';
 
 interface FlowchartEditorProps {
   initialData?: FlowchartData;
@@ -25,49 +26,88 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   const [showTutorial, setShowTutorial] = useState(!localStorage.getItem('tutorialSeen'));
   const [canvasError, setCanvasError] = useState<string | null>(null);
   const [canvasReady, setCanvasReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [failedAttempts, setFailedAttempts] = useState(0);
 
-  // Initialize canvas - com melhor tratamento de erros
+  // Initialize canvas com garantia de visibilidade
   useEffect(() => {
-    console.log("🔄 Inicializando canvas...");
+    console.log("🔄 Inicializando canvas no FlowchartEditor...");
+    setIsLoading(true);
     
     const initCanvas = () => {
       try {
         if (canvasRef.current && containerRef.current && !fabricCanvasRef.current) {
           console.log("✅ Elemento canvas encontrado, criando instância FlowchartCanvas");
           
-          // Definir tamanho do canvas
-          const width = Math.min(window.innerWidth, containerRef.current.clientWidth) - 20;
-          const height = Math.min(window.innerHeight - 200, containerRef.current.clientHeight) - 20;
+          // Garantir que o global LucidModeButton existe
+          if (typeof window.LucidModeButton === 'undefined') {
+            window.LucidModeButton = {};
+            console.log("⚠️ LucidModeButton não encontrado, criando um objeto vazio");
+          }
           
-          console.log(`Dimensões do canvas: ${width}x${height}`);
-          canvasRef.current.width = width;
-          canvasRef.current.height = height;
+          // Garantir que o canvas esteja limpo antes da inicialização
+          const ctx = canvasRef.current.getContext('2d');
+          if (ctx) {
+            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          }
           
-          // Criação do canvas com dimensões explícitas
+          // Definir dimensões explícitas para o canvas e container
+          const containerWidth = Math.min(window.innerWidth, containerRef.current.clientWidth || 800);
+          const containerHeight = Math.min(window.innerHeight - 200, containerRef.current.clientHeight || 500);
+          
+          // Configuração absoluta de tamanho
+          const canvasWidth = containerWidth - 40; // margem para segurança
+          const canvasHeight = containerHeight - 40; // margem para segurança
+          
+          console.log(`Dimensões do container: ${containerWidth}x${containerHeight}`);
+          console.log(`Dimensões do canvas: ${canvasWidth}x${canvasHeight}`);
+          
+          // Garantir que o DOM esteja atualizado
+          if (canvasRef.current) {
+            canvasRef.current.width = canvasWidth;
+            canvasRef.current.height = canvasHeight;
+            canvasRef.current.style.width = `${canvasWidth}px`;
+            canvasRef.current.style.height = `${canvasHeight}px`;
+            canvasRef.current.style.border = "1px solid #ccc";
+            canvasRef.current.style.display = "block";
+            canvasRef.current.style.backgroundColor = "#f8f8f8";
+          }
+          
+          // Criar o canvas com dimensões explícitas
           fabricCanvasRef.current = new FlowchartCanvas(
             'flowchart-canvas',
             initialData,
             handleFlowchartChange,
-            width,
-            height
+            canvasWidth,
+            canvasHeight
           );
           
           console.log("✅ Canvas inicializado com sucesso");
           setCanvasReady(true);
+          setIsLoading(false);
+          setFailedAttempts(0);
           
-          // Garantir que o canvas responda a eventos de redimensionamento
+          // Configurar redimensionamento
           const handleWindowResize = () => {
             if (containerRef.current && canvasRef.current && fabricCanvasRef.current) {
               console.log("🔄 Redimensionando canvas...");
               
               // Redimensionar com valores seguros
-              const newWidth = Math.min(window.innerWidth, containerRef.current.clientWidth) - 20;
-              const newHeight = Math.min(window.innerHeight - 200, containerRef.current.clientHeight) - 20;
+              const newContainerWidth = Math.min(window.innerWidth, containerRef.current.clientWidth || 800);
+              const newContainerHeight = Math.min(window.innerHeight - 200, containerRef.current.clientHeight || 500);
               
+              const newWidth = newContainerWidth - 40;
+              const newHeight = newContainerHeight - 40;
+              
+              console.log(`Novas dimensões do canvas: ${newWidth}x${newHeight}`);
+              
+              // Atualizar tamanho visual
               canvasRef.current.width = newWidth;
               canvasRef.current.height = newHeight;
+              canvasRef.current.style.width = `${newWidth}px`;
+              canvasRef.current.style.height = `${newHeight}px`;
               
-              // Usar o método público de redimensionamento
+              // Atualizar canvas fabric.js
               fabricCanvasRef.current.handleResize(newWidth, newHeight);
             }
           };
@@ -75,7 +115,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
           window.addEventListener('resize', handleWindowResize);
           
           // Chamar o redimensionamento uma vez para garantir
-          setTimeout(handleWindowResize, 100);
+          setTimeout(handleWindowResize, 300);
           
           return () => {
             window.removeEventListener('resize', handleWindowResize);
@@ -84,15 +124,23 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
           console.warn("⚠️ Canvas já inicializado ou elemento não encontrado");
           if (!canvasRef.current) console.error("Canvas ref não encontrado");
           if (!containerRef.current) console.error("Container ref não encontrado");
+          setIsLoading(false);
+          
+          if (!fabricCanvasRef.current) {
+            setFailedAttempts(prev => prev + 1);
+            throw new Error("Fabric Canvas não pôde ser inicializado");
+          }
         }
       } catch (error) {
         console.error("❌ Erro ao inicializar canvas:", error);
-        setCanvasError("Erro ao inicializar a área de desenho. Por favor, recarregue a página.");
+        setCanvasError(`Erro ao inicializar a área de desenho: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+        setIsLoading(false);
+        setFailedAttempts(prev => prev + 1);
       }
     };
     
-    // Pequeno delay para garantir que o DOM esteja pronto
-    const timeoutId = setTimeout(initCanvas, 300);
+    // Dar um tempo para o DOM estar pronto
+    const timeoutId = setTimeout(initCanvas, 500);
     
     return () => {
       clearTimeout(timeoutId);
@@ -106,7 +154,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
         }
       }
     };
-  }, [initialData]);
+  }, [initialData, failedAttempts]);
 
   // Tutorial que desaparece após 15 segundos
   useEffect(() => {
@@ -255,18 +303,59 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     }
   };
 
+  const handleRetryCanvas = () => {
+    setCanvasError(null);
+    setIsLoading(true);
+    setFailedAttempts(prev => prev + 1);
+    
+    // Limpar referências
+    if (fabricCanvasRef.current) {
+      try {
+        fabricCanvasRef.current.destroy();
+      } catch (e) {
+        console.error("Erro ao destruir canvas:", e);
+      }
+      fabricCanvasRef.current = null;
+    }
+  };
+
+  // Se houver muitas tentativas falhas, mostrar o fallback
+  if (failedAttempts >= 3) {
+    return (
+      <div className="flex flex-col h-full">
+        <Toolbar
+          onAddNode={handleAddNode}
+          onAddConnector={handleAddConnector}
+          onDelete={handleDelete}
+          onExport={handleExport}
+          onShare={handleShare}
+          onSave={handleSave}
+          isConnecting={isConnecting}
+          disabled={true}
+        />
+        <div className="flex-1 flex items-center justify-center bg-gray-100">
+          <FallbackCanvas 
+            error={canvasError || "Não foi possível inicializar o editor após várias tentativas."} 
+            onRetry={handleRetryCanvas} 
+          />
+        </div>
+        <Watermark />
+      </div>
+    );
+  }
+
   // Se houver erro na inicialização do canvas
-  if (canvasError) {
+  if (canvasError && failedAttempts < 3) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-800">
         <div className="bg-red-900 text-white p-4 rounded-lg max-w-md text-center">
           <h3 className="font-bold mb-2">Erro ao carregar o editor</h3>
           <p>{canvasError}</p>
           <button 
-            onClick={() => window.location.reload()}
+            onClick={handleRetryCanvas}
             className="mt-3 px-4 py-2 bg-red-700 rounded hover:bg-red-600"
           >
-            Recarregar
+            Tentar novamente
           </button>
         </div>
       </div>
@@ -283,29 +372,50 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
         onShare={handleShare}
         onSave={handleSave}
         isConnecting={isConnecting}
+        disabled={!canvasReady}
       />
       
       <div 
         ref={containerRef}
-        className="flex-1 flex items-center justify-center p-4 bg-gray-100"
+        className="flex-1 flex items-center justify-center p-4 bg-gray-100 overflow-hidden"
+        style={{ minHeight: '70vh' }}
       >
-        <div className="relative border border-gray-300 rounded shadow-lg" style={{ width: '100%', height: '100%', maxWidth: '1600px', maxHeight: '800px' }}>
+        <div className="relative border-2 border-gray-400 rounded-lg shadow-lg bg-white" 
+             style={{ 
+               width: '95%', 
+               height: '95%', 
+               maxWidth: '1600px', 
+               maxHeight: '800px',
+               position: 'relative',
+               overflow: 'hidden'
+             }}>
           <canvas
             ref={canvasRef}
             id="flowchart-canvas"
-            className="absolute inset-0"
-            style={{ touchAction: 'none' }}
+            className="absolute inset-0 z-10"
+            style={{ 
+              touchAction: 'none', 
+              display: 'block',
+              border: '1px solid #ccc',
+              boxShadow: 'inset 0 0 10px rgba(0,0,0,0.05)'
+            }}
           />
           
-          {!canvasReady && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-70">
-              <div className="text-xl text-gray-700">Carregando editor...</div>
+          {(isLoading || !canvasReady) && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white z-20">
+              <div className="text-center">
+                <div className="w-16 h-16 border-t-4 border-blue-500 border-solid rounded-full animate-spin mx-auto mb-4"></div>
+                <div className="text-xl text-gray-700">Carregando editor...</div>
+                <p className="text-sm text-gray-500 mt-2">
+                  Pode demorar alguns segundos na primeira vez
+                </p>
+              </div>
             </div>
           )}
         </div>
         
-        {showTutorial && (
-          <div className="absolute top-24 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white p-4 rounded-lg shadow-lg z-10 max-w-md">
+        {showTutorial && canvasReady && (
+          <div className="absolute top-24 right-8 bg-black bg-opacity-80 text-white p-4 rounded-lg shadow-lg z-30 max-w-md">
             <h3 className="font-bold mb-2">Como usar:</h3>
             <ol className="list-decimal pl-5 space-y-1 text-sm">
               <li>Clique em "Retângulo", "Círculo" ou "Losango" para adicionar um nó</li>

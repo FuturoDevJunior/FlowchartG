@@ -10,6 +10,7 @@ interface ToolbarProps {
   onShare: () => void;
   onSave: () => void;
   isConnecting: boolean;
+  disabled?: boolean;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -20,6 +21,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onShare,
   onSave,
   isConnecting,
+  disabled = false
 }) => {
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
 
@@ -42,6 +44,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             className="text-white hover:bg-gray-700"
             onMouseEnter={() => setShowTooltip('rect')}
             onMouseLeave={() => setShowTooltip(null)}
+            disabled={disabled}
           >
             <Square size={20} className="mr-1" />
             <span className="hidden sm:inline">Retângulo</span>
@@ -56,6 +59,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             className="text-white hover:bg-gray-700"
             onMouseEnter={() => setShowTooltip('circle')}
             onMouseLeave={() => setShowTooltip(null)}
+            disabled={disabled}
           >
             <Circle size={20} className="mr-1" />
             <span className="hidden sm:inline">Círculo</span>
@@ -70,6 +74,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             className="text-white hover:bg-gray-700"
             onMouseEnter={() => setShowTooltip('diamond')}
             onMouseLeave={() => setShowTooltip(null)}
+            disabled={disabled}
           >
             <Diamond size={20} className="mr-1" />
             <span className="hidden sm:inline">Losango</span>
@@ -84,6 +89,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             className={`text-white hover:bg-gray-700 ${isConnecting ? 'bg-green-800' : ''}`}
             onMouseEnter={() => setShowTooltip('connect')}
             onMouseLeave={() => setShowTooltip(null)}
+            disabled={disabled}
           >
             <Link size={20} className="mr-1" />
             <span className="hidden sm:inline">Conectar</span>
@@ -98,6 +104,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             className="text-white hover:bg-gray-700"
             onMouseEnter={() => setShowTooltip('delete')}
             onMouseLeave={() => setShowTooltip(null)}
+            disabled={disabled}
           >
             <Trash2 size={20} className="mr-1" />
             <span className="hidden sm:inline">Apagar</span>
@@ -114,6 +121,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             className="text-white hover:bg-gray-700"
             onMouseEnter={() => setShowTooltip('export')}
             onMouseLeave={() => setShowTooltip(null)}
+            disabled={disabled}
           >
             <Download size={20} className="mr-1" />
             <span className="hidden sm:inline">Exportar</span>
@@ -128,6 +136,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             className="text-white hover:bg-gray-700"
             onMouseEnter={() => setShowTooltip('share')}
             onMouseLeave={() => setShowTooltip(null)}
+            disabled={disabled}
           >
             <Share2 size={20} className="mr-1" />
             <span className="hidden sm:inline">Compartilhar</span>
@@ -145,6 +154,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             }}
             onMouseEnter={() => setShowTooltip('save')}
             onMouseLeave={() => showTooltip !== 'saved' && setShowTooltip(null)}
+            disabled={disabled}
           >
             <Save size={20} className="mr-1" />
             <span className="hidden sm:inline">Salvar</span>
