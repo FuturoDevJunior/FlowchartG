@@ -4,6 +4,14 @@ Um aplicativo web para criar, editar e compartilhar fluxogramas de forma simples
 
 ![FlowchartSaaS Screenshot](https://via.placeholder.com/800x400?text=FlowchartSaaS)
 
+<p align="center">
+  <a href="#english">English</a> •
+  <a href="#português">Português</a> •
+  <a href="#español">Español</a> •
+  <a href="#français">Français</a> •
+  <a href="#deutsch">Deutsch</a>
+</p>
+
 ## Funcionalidades
 
 - Criação de fluxogramas com diferentes tipos de nós (retângulos, círculos, diamantes)
@@ -101,14 +109,6 @@ Este projeto está licenciado sob a licença MIT - veja o arquivo LICENSE para m
 ## Autor
 
 Desenvolvido por [DevFerreiraG](https://linkedin.com/in/DevFerreiraG)
-
-<p align="center">
-  <a href="#english">English</a> •
-  <a href="#português">Português</a> •
-  <a href="#español">Español</a> •
-  <a href="#français">Français</a> •
-  <a href="#deutsch">Deutsch</a>
-</p>
 
 <h2 id="english">🇬🇧 English</h2>
 
