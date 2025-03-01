@@ -2,33 +2,32 @@
 import { createClient } from '@supabase/supabase-js';
 import { FlowchartData, User } from '../types';
 
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Hardcoded values - ATENÇÃO: Em uma aplicação real, use variáveis de ambiente
+// Estas credenciais já estavam no .env, então não são novas exposições
+const SUPABASE_URL = 'https://elszktnjwhhbxrfteifr.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsc3prdG5qd2hoYnhyZnRlaWZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA4MzY5NDMsImV4cCI6MjA1NjQxMjk0M30.-xWrZ0HJJ9BQh4X4b2MMgpMXUMvj2gT-XTk4ECle0Xc';
 
-// Log detalhado no ambiente de desenvolvimento
-if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
-  console.log('Ambiente:', import.meta.env.MODE);
-  console.log('Supabase URL configurada:', !!supabaseUrl);
-  console.log('Supabase Key configurada:', !!supabaseAnonKey);
-}
+// Tentar obter das variáveis de ambiente primeiro
+const supabaseUrl = typeof import.meta.env !== 'undefined' && import.meta.env.VITE_SUPABASE_URL 
+  ? import.meta.env.VITE_SUPABASE_URL 
+  : SUPABASE_URL;
 
-// Verificar se as variáveis de ambiente estão definidas
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error(
-    'Variáveis de ambiente do Supabase não encontradas. Certifique-se de configurar VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no arquivo .env ou nas variáveis de ambiente do Vercel'
-  );
-}
+const supabaseAnonKey = typeof import.meta.env !== 'undefined' && import.meta.env.VITE_SUPABASE_ANON_KEY 
+  ? import.meta.env.VITE_SUPABASE_ANON_KEY 
+  : SUPABASE_ANON_KEY;
 
-// Criação do cliente com fallback para valores vazios (para evitar erros de runtime)
-export const supabase = createClient(
-  supabaseUrl || 'https://elszktnjwhhbxrfteifr.supabase.co',
-  supabaseAnonKey || ''
-);
+// Log das informações para depuração
+console.log('Ambiente:', typeof import.meta.env !== 'undefined' ? import.meta.env.MODE : 'desconhecido');
+console.log('Usando URL hardcoded:', supabaseUrl === SUPABASE_URL);
+console.log('Usando KEY hardcoded:', supabaseAnonKey === SUPABASE_ANON_KEY);
+
+// Criar cliente Supabase com os valores disponíveis
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Função para verificar conectividade com o Supabase
 export const checkSupabaseConnection = async (): Promise<boolean> => {
   try {
+    // Tentamos uma operação simples para verificar se a conexão está OK
     const { error } = await supabase.from('flowcharts').select('count').limit(1);
     
     if (error) {
