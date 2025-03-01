@@ -2,10 +2,6 @@
 
 // Estendendo o Window para incluir objetos globais necessários
 interface Window {
-  LucidModeButton: any;
-  VideoToolbar?: {
-    BUTTONS: any;
-  };
   ensureCanvasReady?: () => void;
 }
 

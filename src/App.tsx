@@ -4,11 +4,6 @@ import FlowchartEditor from './components/organisms/FlowchartEditor';
 import { FlowchartData } from './types';
 import { loadFromLocalStorage, loadFromShareableLink } from './lib/storage';
 
-// Adicionando um fallback global para o módulo LucidModeButton
-if (typeof window !== 'undefined') {
-  window.LucidModeButton = window.LucidModeButton || {};
-}
-
 function App() {
   const [initialData, setInitialData] = useState<FlowchartData | undefined>(undefined);
   const [loading, setLoading] = useState(true);

@@ -39,12 +39,6 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
         if (canvasRef.current && containerRef.current && !fabricCanvasRef.current) {
           console.log("✅ Elemento canvas encontrado, criando instância FlowchartCanvas");
           
-          // Garantir que o global LucidModeButton existe
-          if (typeof window.LucidModeButton === 'undefined') {
-            window.LucidModeButton = {};
-            console.log("⚠️ LucidModeButton não encontrado, criando um objeto vazio");
-          }
-          
           // Garantir que o canvas esteja limpo antes da inicialização
           const ctx = canvasRef.current.getContext('2d');
           if (ctx) {

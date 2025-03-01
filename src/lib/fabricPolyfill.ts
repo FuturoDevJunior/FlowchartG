@@ -6,18 +6,6 @@
 
 // Garantir que os objetos globais necessários existam
 if (typeof window !== 'undefined') {
-  // Prevenir erros com LucidModeButton
-  if (typeof window.LucidModeButton === 'undefined') {
-    console.log('🔄 Inicializando LucidModeButton');
-    window.LucidModeButton = {};
-  }
-
-  // Prevenir erros com VideoToolbar
-  if (typeof window.VideoToolbar === 'undefined') {
-    console.log('🔄 Inicializando VideoToolbar');
-    window.VideoToolbar = { BUTTONS: {} };
-  }
-
   // Garantir que os métodos de canvas existam
   if (typeof HTMLCanvasElement !== 'undefined') {
     const canvas = document.createElement('canvas');

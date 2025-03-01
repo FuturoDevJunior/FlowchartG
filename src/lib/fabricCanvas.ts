@@ -142,7 +142,7 @@ export class FlowchartCanvas {
     try {
       this.canvas.on('object:moving', this.handleObjectMoving);
       this.canvas.on('object:modified', this.handleObjectModified);
-      this.canvas.on('mouse:down', (opts) => {
+      this.canvas.on('mouse:down', (opts: fabric.IEvent) => {
         console.log("Mouse down no canvas");
       });
       console.log("✅ Event listeners configurados com sucesso");
@@ -188,23 +188,30 @@ export class FlowchartCanvas {
         }
       };
 
+      // Default dimensions
+      let width = 120;
+      let height = 60;
+      
       // Criar forma baseada no tipo
       if (type === 'rectangle') {
         obj = new fabric.Rect({
           ...commonOptions,
-          width: 120,
-          height: 60,
-          left: x - 60,
-          top: y - 30,
+          width: width,
+          height: height,
+          left: x - width/2,
+          top: y - height/2,
           rx: 5,
           ry: 5
         });
       } else if (type === 'circle') {
+        const radius = 40;
+        width = radius * 2;
+        height = radius * 2;
         obj = new fabric.Circle({
           ...commonOptions,
-          radius: 40,
-          left: x - 40,
-          top: y - 40
+          radius: radius,
+          left: x - radius,
+          top: y - radius
         });
       } else if (type === 'diamond') {
         // Criar um losango usando um polígono
@@ -214,6 +221,8 @@ export class FlowchartCanvas {
           { x: 0, y: 40 },   // base
           { x: -60, y: 0 }   // esquerda
         ];
+        width = 120;
+        height = 80;
         obj = new fabric.Polygon(points, {
           ...commonOptions,
           left: x,
@@ -262,13 +271,13 @@ export class FlowchartCanvas {
       const nodeData: FlowchartNode = {
         id: nodeId,
         type: type,
-        position: { x, y },
+        x: x,
+        y: y,
+        width: width,
+        height: height,
         text: 'Texto',
-        style: {
-          fill: '#ffffff',
-          stroke: '#000000',
-          strokeWidth: 2
-        }
+        fill: '#ffffff',
+        stroke: '#000000'
       };
       
       // Atualizar flowchartData
@@ -637,32 +646,36 @@ export class FlowchartCanvas {
       const updatedNodes: FlowchartNode[] = [];
       this.nodes.forEach((obj, id) => {
         if (obj && obj.data) {
-          const position = {
-            x: obj.left || 0,
-            y: obj.top || 0
-          };
-          
           // Encontrar o texto dentro do grupo
           let text = 'Texto';
           if (obj instanceof fabric.Group) {
             const textObj = obj.getObjects().find(
-              o => o instanceof fabric.IText || o instanceof fabric.Text
+              (o: fabric.Object) => o instanceof fabric.IText || o instanceof fabric.Text
             );
             if (textObj) {
               text = (textObj as fabric.IText).text || 'Texto';
             }
           }
           
+          // Determine width and height based on object type
+          let width = 120; // default
+          let height = 60; // default
+          
+          if (obj.width && obj.height) {
+            width = obj.width;
+            height = obj.height;
+          }
+          
           updatedNodes.push({
             id: id,
             type: obj.data.nodeType || 'rectangle',
-            position: position,
+            x: obj.left || 0,
+            y: obj.top || 0,
+            width: width,
+            height: height,
             text: text,
-            style: {
-              fill: obj.fill as string || '#ffffff',
-              stroke: obj.stroke as string || '#000000',
-              strokeWidth: obj.strokeWidth as number || 2
-            }
+            fill: obj.fill as string || '#ffffff',
+            stroke: obj.stroke as string || '#000000'
           });
         }
       });

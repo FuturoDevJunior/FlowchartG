@@ -5,33 +5,17 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FlowchartG - Crie fluxogramas facilmente</title>
-    <!-- Scripts para garantir compatibilidade -->
     <script>
-      // Definir globais necessários antes da inicialização
-      window.LucidModeButton = {};
-      window.VideoToolbar = { BUTTONS: {} };
-      
       // Função para garantir que o canvas seja inicializado corretamente
       window.ensureCanvasReady = function() {
-        console.log("✨ Preparando ambiente para o canvas...");
-        
-        // Tentar inicializar fabric.js se necessário
-        if (typeof fabric === 'undefined') {
-          console.log("⚠️ Fabric não encontrado, será carregado pela aplicação");
-        }
-        
-        // Verificar se o viewport está correto
         const viewport = document.querySelector('meta[name="viewport"]');
         if (viewport) {
           viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-          console.log("✅ Viewport ajustado para melhor experiência");
         }
       };
       
-      // Executar após o carregamento do DOM
       document.addEventListener('DOMContentLoaded', function() {
         window.ensureCanvasReady();
-        console.log("🚀 Página carregada, inicializando aplicação...");
       });
     </script>
   </head>
