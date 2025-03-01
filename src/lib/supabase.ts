@@ -1,11 +1,37 @@
 import { createClient } from '@supabase/supabase-js';
 import { FlowchartData, User } from '../types';
 
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Tipagem para o ImportMeta
+declare global {
+  interface ImportMeta {
+    env: {
+      DEV: boolean;
+      VITE_SUPABASE_URL: string;
+      VITE_SUPABASE_ANON_KEY: string;
+    };
+  }
+}
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Initialize Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Log para depuração em ambiente de desenvolvimento
+if (import.meta.env.DEV) {
+  console.log('Supabase URL:', supabaseUrl ? 'Configurado' : 'Não configurado');
+  console.log('Supabase Anon Key:', supabaseAnonKey ? 'Configurado' : 'Não configurado');
+}
+
+// Verificar se as variáveis de ambiente estão definidas
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Erro: Variáveis de ambiente do Supabase não estão configuradas corretamente.');
+  console.error('Verifique se VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY estão definidas no ambiente.');
+}
+
+export const supabase = createClient(
+  supabaseUrl || 'https://elszktnjwhhbxrfteifr.supabase.co',
+  supabaseAnonKey || 'fallback_key_apenas_para_evitar_erros_de_inicializacao'
+);
 
 // Authentication functions
 export const signInWithEmail = async (email: string): Promise<{ error: Error | null }> => {
