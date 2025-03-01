@@ -9,6 +9,27 @@ import { Plus, Minus, Maximize2 } from 'lucide-react';
 // Type for the dynamically imported FlowchartCanvas
 type FlowchartCanvasType = import('../../lib/fabricCanvas').FlowchartCanvas;
 
+// Interface para representar um nó no canvas
+interface NodeObject {
+  data: {
+    id: string;
+    type: string;
+    originalStroke?: string;
+    originalStrokeWidth?: number;
+  };
+  stroke: string;
+  strokeWidth: number;
+  set: (options: Record<string, unknown>) => void;
+}
+
+// Interface para acessar propriedades internas do FlowchartCanvas
+interface InternalCanvas {
+  nodes: Map<string, NodeObject>;
+  canvas: {
+    requestRenderAll: () => void;
+  };
+}
+
 interface FlowchartEditorProps {
   initialData?: FlowchartData;
 }
@@ -22,6 +43,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   const retryCountRef = useRef<number>(0);
   
   const [isConnecting, setIsConnecting] = useState(false);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareableLink, setShareableLink] = useState('');
   const [flowchartData, setFlowchartData] = useState<FlowchartData | undefined>(initialData);
@@ -47,7 +69,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     };
   }, []);
 
-  // Simplified - Initialize canvas with retries
+  // Inicialização do canvas com centralização explícita
   useEffect(() => {
     setIsLoading(true);
     setIsError(false);
@@ -87,12 +109,18 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
             // Hook up resize handler
             window.addEventListener('resize', handleResize);
             
-            // Center view if there are elements
-            if (initialData?.nodes?.length) {
-              setTimeout(() => {
-                centerView();
-              }, 300);
-            }
+            // Center view if there are elements - usamos setTimeout para garantir que o canvas esteja pronto
+            setTimeout(() => {
+              if (fabricCanvasRef.current) {
+                fabricCanvasRef.current.centerView();
+                
+                // Se temos dados iniciais, devemos ter um zoom mais amplo
+                if (initialData?.nodes?.length && initialData.nodes.length > 1) {
+                  setZoomLevel(0.8);
+                  fabricCanvasRef.current.setZoom(0.8);
+                }
+              }
+            }, 500);
             
             setIsLoading(false);
           } catch (error) {
@@ -129,8 +157,9 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
       if (fabricCanvasRef.current) {
         try {
           fabricCanvasRef.current.destroy();
-        } catch (_) {
-          // Ignore errors
+        } catch (error) {
+          // Ignore errors on cleanup
+          console.error("Error during canvas cleanup:", error);
         }
         fabricCanvasRef.current = null;
       }
@@ -238,9 +267,11 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     if (isConnecting) {
       // Cancel connecting mode
       setIsConnecting(false);
+      setSelectedNodeId(null);
     } else {
       // Start connecting mode
       setIsConnecting(true);
+      setSelectedNodeId(null);
       
       // Show different message for mobile vs desktop
       if (isMobile) {
@@ -313,8 +344,9 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     if (fabricCanvasRef.current) {
       try {
         fabricCanvasRef.current.destroy();
-      } catch (_) {
-        // Ignore errors
+      } catch (error) {
+        // Ignore errors on cleanup
+        console.error("Error during canvas cleanup:", error);
       }
       fabricCanvasRef.current = null;
     }
@@ -356,6 +388,128 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     }, 500);
   }, [handleFlowchartChange, initialData, isMobile]);
 
+  // Handler para selecionar nós para conexão
+  useEffect(() => {
+    if (!fabricCanvasRef.current || !isConnecting) return;
+    
+    // Handler para selecionar nós para conexão
+    const handleNodeSelection = (e: MouseEvent | TouchEvent) => {
+      if (!fabricCanvasRef.current) return;
+      
+      try {
+        // Usar o novo método para identificar nós
+        const nodeInfo = fabricCanvasRef.current.getNodeFromEvent(e);
+        
+        if (nodeInfo) {
+          const nodeId = nodeInfo.id;
+          
+          if (!selectedNodeId) {
+            // Primeiro nó selecionado
+            setSelectedNodeId(nodeId);
+          } else if (selectedNodeId !== nodeId) {
+            // Segundo nó selecionado, criar conector
+            fabricCanvasRef.current.addConnector(selectedNodeId, nodeId);
+            
+            // Limpar seleção e sair do modo de conexão
+            setSelectedNodeId(null);
+            setIsConnecting(false);
+          }
+        }
+      } catch (error) {
+        // Capturar erros específicos silenciosamente para não interromper a experiência 
+        console.error("Error selecting node:", error);
+      }
+    };
+    
+    // Adicionar event listener diretamente ao canvas
+    const canvasElement = document.getElementById('flowchart-canvas');
+    if (canvasElement) {
+      canvasElement.addEventListener('mousedown', handleNodeSelection);
+      canvasElement.addEventListener('touchstart', handleNodeSelection);
+    }
+    
+    return () => {
+      if (canvasElement) {
+        canvasElement.removeEventListener('mousedown', handleNodeSelection);
+        canvasElement.removeEventListener('touchstart', handleNodeSelection);
+      }
+    };
+  }, [isConnecting, selectedNodeId, fabricCanvasRef]);
+
+  // Função para destacar nós durante o modo de conexão
+  useEffect(() => {
+    if (!fabricCanvasRef.current) return;
+    
+    // Função para destacar visualmente todos os nós quando estamos no modo de conexão
+    const highlightNodesForConnection = (highlight: boolean) => {
+      try {
+        const canvas = fabricCanvasRef.current;
+        if (!canvas) return;
+        
+        // Se estivermos destacando para conexão, adicionar uma borda brilhante a todos os nós
+        const allNodes = Array.from(canvas.getData().nodes);
+        
+        // Cast para InternalCanvas para acessar propriedades internas com segurança de tipos
+        const internalCanvas = canvas as unknown as InternalCanvas;
+        
+        allNodes.forEach(node => {
+          const nodeObj = internalCanvas.nodes.get(node.id);
+          if (!nodeObj) return;
+          
+          if (highlight) {
+            // Salvar o stroke original se ainda não tiver sido salvo
+            if (!nodeObj.data.originalStroke) {
+              nodeObj.data.originalStroke = nodeObj.stroke || '#000000';
+              nodeObj.data.originalStrokeWidth = nodeObj.strokeWidth || 2;
+            }
+            
+            // Se for o nó selecionado atualmente, destaque diferente
+            if (selectedNodeId && nodeObj.data.id === selectedNodeId) {
+              nodeObj.set({
+                stroke: '#FF3D00', // Laranja brilhante para o nó selecionado
+                strokeWidth: 4
+              });
+            } else {
+              nodeObj.set({
+                stroke: '#1976D2', // Azul mais brilhante
+                strokeWidth: 3
+              });
+            }
+          } else {
+            // Restaurar o stroke original se existir
+            if (nodeObj.data.originalStroke) {
+              nodeObj.set({
+                stroke: nodeObj.data.originalStroke,
+                strokeWidth: nodeObj.data.originalStrokeWidth
+              });
+              
+              // Remover as propriedades temporárias
+              delete nodeObj.data.originalStroke;
+              delete nodeObj.data.originalStrokeWidth;
+            }
+          }
+        });
+        
+        // Acesso ao canvas subjacente para forçar a renderização
+        if (internalCanvas.canvas && internalCanvas.canvas.requestRenderAll) {
+          internalCanvas.canvas.requestRenderAll();
+        }
+      } catch (error) {
+        console.error("Error highlighting nodes:", error);
+      }
+    };
+    
+    // Aplicar destaque quando estamos no modo de conexão
+    highlightNodesForConnection(isConnecting);
+    
+    // Limpar ao sair do efeito
+    return () => {
+      if (isConnecting) {
+        highlightNodesForConnection(false);
+      }
+    };
+  }, [isConnecting, selectedNodeId, fabricCanvasRef]);
+
   return (
     <div className="flex flex-col h-full">
       <Toolbar
@@ -369,6 +523,32 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
         disabled={isLoading || isError}
         isMobile={isMobile}
       />
+      
+      {isConnecting && (
+        <div className="bg-blue-600 text-white px-4 py-3 shadow-md">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <svg className="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span className="font-semibold">
+                {selectedNodeId 
+                  ? "🔀 Selecione o SEGUNDO nó para completar a conexão" 
+                  : "🔀 Selecione o PRIMEIRO nó para iniciar a conexão"}
+              </span>
+            </div>
+            <button 
+              onClick={() => {
+                setIsConnecting(false);
+                setSelectedNodeId(null);
+              }}
+              className="bg-white text-blue-600 px-3 py-1 rounded-md text-sm font-medium hover:bg-blue-100 transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
       
       <div 
         ref={containerRef}

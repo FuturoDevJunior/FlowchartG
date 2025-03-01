@@ -1,36 +1,33 @@
-# Este workflow está temporariamente desativado
-# Para ativá-lo, remova o prefixo "disabled-" do nome do arquivo
-# e configure os secrets VERCEL_TOKEN, VERCEL_ORG_ID e VERCEL_PROJECT_ID no GitHub
-
 name: Deploy to Vercel
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches:
+      - main
+      - master
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+        with:
+          fetch-depth: 0
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           cache: 'npm'
-      
-      - name: Install dependencies
+
+      - name: Install Dependencies
         run: npm ci
-      
+
       - name: Build
         run: npm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-      
+          VITE_LOCAL_STORAGE_KEY: flowchart_g_data
+
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v20
         with:
@@ -38,4 +35,4 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           working-directory: ./
-          vercel-args: '--prod'
+          vercel-args: '--prod' 

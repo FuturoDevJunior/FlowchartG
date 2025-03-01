@@ -189,11 +189,16 @@ export class FlowchartCanvas {
 
   // Center view on all objects or fit all objects into view
   public centerView(): void {
-    if (!this.isCanvasReady() || this.nodes.size === 0) return;
+    if (!this.isCanvasReady()) return;
     
     try {
-      // Get all objects
-      const allObjects = Array.from(this.nodes.values());
+      // Get all objects - incluir tanto nós quanto conectores
+      const allObjects = [
+        ...Array.from(this.nodes.values()),
+        ...Array.from(this.connectors.values())
+      ];
+      
+      if (allObjects.length === 0) return;
       
       // Calculate bounds
       const bounds = this.getObjectsBounds(allObjects);
@@ -215,23 +220,43 @@ export class FlowchartCanvas {
         this.canvas.relativePan(new fabric.Point(deltaX, deltaY));
         
         // Set zoom to fit all objects with some padding
-        const padding = 50;
+        const padding = 80; // Aumentado para dar mais espaço
         const scaleX = this.canvas.width / (bounds.width + padding * 2);
         const scaleY = this.canvas.height / (bounds.height + padding * 2);
         
         // Use the smaller scale to ensure everything fits
-        const newZoom = Math.min(scaleX, scaleY, 1); // Limit to 1.0 max
+        // Limitamos a um zoom máximo de 1.0 e mínimo de 0.5
+        const newZoom = Math.min(Math.max(0.5, Math.min(scaleX, scaleY)), 1);
         
         // Apply zoom if it's different enough
         if (Math.abs(this.zoomLevel - newZoom) > 0.05) {
           this.setZoom(newZoom);
         }
         
-        // Render changes
-        this.canvas.renderAll();
+        // Force render all immediately
+        setTimeout(() => {
+          this.canvas.requestRenderAll();
+        }, 50);
+      } else {
+        // Se não temos objetos ou bounds válidos, apenas resetamos o zoom
+        this.setZoom(1.0);
+        
+        if (this.canvas.viewportTransform) {
+          this.canvas.viewportTransform[4] = 0;
+          this.canvas.viewportTransform[5] = 0;
+          this.canvas.requestRenderAll();
+        }
       }
     } catch (error) {
       console.error("Error centering view:", error);
+      
+      // Em caso de erro, tentar uma abordagem mais simples
+      if (this.canvas.viewportTransform) {
+        this.canvas.viewportTransform[4] = 0;
+        this.canvas.viewportTransform[5] = 0;
+        this.setZoom(1.0);
+        this.canvas.requestRenderAll();
+      }
     }
   }
 
@@ -507,12 +532,10 @@ export class FlowchartCanvas {
     // We use a path instead of a line for better control over the curve
     const dx = toCenter.x - fromCenter.x;
     const dy = toCenter.y - fromCenter.y;
-    // Calculate distance but we don't need it further in this method
-    // const distance = Math.sqrt(dx * dx + dy * dy);
     
     // Calculate control points for a quadratic curve
     // Use a proportion of the distance for curve control
-    const controlPointFactor = 0.2;  // 0 = straight line, higher = more curve
+    const controlPointFactor = 0.3;  // Aumentar o fator para curvas mais pronunciadas (era 0.2)
     const midX = fromCenter.x + dx * 0.5;
     const midY = fromCenter.y + dy * 0.5;
     
@@ -527,11 +550,20 @@ export class FlowchartCanvas {
     // Create a curved path (quadratic bezier)
     const path = new fabric.Path(`M ${fromCenter.x} ${fromCenter.y} Q ${cpX} ${cpY} ${toCenter.x} ${toCenter.y}`, {
       fill: '',
-      stroke: '#2A2A2A',
-      strokeWidth: 2,
+      stroke: '#1E88E5', // Azul mais brilhante (era #2A2A2A)
+      strokeWidth: 3,    // Linha mais grossa (era 2)
       objectCaching: false,
       selectable: true,
       evented: true,
+      strokeLineCap: 'round', // Extremidades arredondadas
+      strokeLineJoin: 'round', // Junções arredondadas
+      hoverCursor: 'pointer',
+      shadow: new fabric.Shadow({ 
+        color: 'rgba(0,0,0,0.2)', 
+        blur: 4, 
+        offsetX: 2, 
+        offsetY: 2 
+      }),
       data: { 
         id, 
         fromId, 
@@ -542,7 +574,7 @@ export class FlowchartCanvas {
     
     // Add arrow
     const angle = Math.atan2(toCenter.y - cpY, toCenter.x - cpX);
-    const headLength = 15;
+    const headLength = 16; // Seta maior (era 15)
     
     const arrowHead = new fabric.Triangle({
       width: headLength,
@@ -550,11 +582,17 @@ export class FlowchartCanvas {
       left: toCenter.x,
       top: toCenter.y,
       angle: (angle * 180) / Math.PI + 90,
-      fill: '#2A2A2A',
+      fill: '#1E88E5', // Mesma cor da linha (era #2A2A2A)
       originX: 'center',
       originY: 'center',
       selectable: false,
       evented: false,
+      shadow: new fabric.Shadow({ 
+        color: 'rgba(0,0,0,0.2)', 
+        blur: 3, 
+        offsetX: 1, 
+        offsetY: 1 
+      }),
     });
     
     // Create connector group
@@ -564,6 +602,7 @@ export class FlowchartCanvas {
       lockScalingX: true,
       lockScalingY: true,
       hoverCursor: 'pointer',
+      selectable: true, // Garantir que é selecionável
       data: { 
         id, 
         fromId, 
@@ -575,19 +614,28 @@ export class FlowchartCanvas {
     // Add to canvas
     this.canvas.add(connector);
     this.connectors.set(id, connector);
+    
+    // Garante que o conector aparece acima (bringToFront)
+    connector.bringToFront();
+    
+    // Atualiza o conector uma vez para garantir posição correta
+    this.updateConnector(connector);
 
     // Add to flowchart data
     const connectorData: FlowchartConnector = {
       id,
       from: fromId,
       to: toId,
-      stroke: '#2A2A2A',
-      strokeWidth: 2,
+      stroke: '#1E88E5', // Atualiza a cor da linha no dados também
+      strokeWidth: 3,    // Atualiza a espessura da linha nos dados
       arrow: true,
     };
 
     this.flowchartData.connectors.push(connectorData);
     this.saveState();
+
+    // Renderiza o canvas após adicionar o conector
+    this.canvas.renderAll();
 
     return id;
   }
@@ -609,7 +657,7 @@ export class FlowchartCanvas {
     const dx = toCenter.x - fromCenter.x;
     const dy = toCenter.y - fromCenter.y;
     
-    const controlPointFactor = 0.2;
+    const controlPointFactor = 0.3;
     const midX = fromCenter.x + dx * 0.5;
     const midY = fromCenter.y + dy * 0.5;
     
@@ -631,6 +679,14 @@ export class FlowchartCanvas {
           ['M', fromCenter.x, fromCenter.y],
           ['Q', cpX, cpY, toCenter.x, toCenter.y]
         ];
+        
+        // Manter as mesmas propriedades de estilo
+        path.set({
+          stroke: '#1E88E5',
+          strokeWidth: 3,
+          strokeLineCap: 'round',
+          strokeLineJoin: 'round',
+        });
       }
       
       if (arrow instanceof fabric.Triangle) {
@@ -639,12 +695,18 @@ export class FlowchartCanvas {
         arrow.set({
           left: toCenter.x,
           top: toCenter.y,
-          angle: (angle * 180) / Math.PI + 90
+          angle: (angle * 180) / Math.PI + 90,
+          fill: '#1E88E5'
         });
       }
       
+      // Garantir que o conector fique visível
+      connector.bringToFront();
       connector.setCoords();
     }
+    
+    // Atualizar estado
+    this.saveState();
   }
 
   public removeNode(id: string): void {
@@ -907,8 +969,8 @@ export class FlowchartCanvas {
           id: id,
           from: obj.data.fromId,
           to: obj.data.toId,
-          stroke: '#2A2A2A',
-          strokeWidth: 2,
+          stroke: '#1E88E5', // Cor azul atualizada
+          strokeWidth: 3,    // Espessura atualizada
           arrow: true
         });
       }
@@ -955,5 +1017,48 @@ export class FlowchartCanvas {
     this.canvas.isDragging = false;
     this.canvas.lastPosX = 0;
     this.canvas.lastPosY = 0;
+  }
+
+  // Método para identificar um nó a partir de um evento
+  public getNodeFromEvent(event: MouseEvent | TouchEvent): { id: string; type: string } | null {
+    try {
+      // Não precisamos converter o evento para coordenadas do canvas para isso
+      
+      // Encontrar o objeto sob o ponteiro
+      // Como findTarget não está na interface ExtendedCanvas, fazemos um cast para um tipo mais específico
+      interface CanvasWithFindTarget extends fabric.Canvas {
+        findTarget(e: Event, skipGroup: boolean): fabric.Object | undefined;
+      }
+      
+      const fabricCanvas = this.canvas as unknown as CanvasWithFindTarget;
+      if (!fabricCanvas.findTarget) return null;
+      
+      const object = fabricCanvas.findTarget(event, false);
+      
+      if (object && object.data && object.data.type === 'node') {
+        return {
+          id: object.data.id,
+          type: object.data.nodeType || 'unknown'
+        };
+      }
+      
+      // Se o objeto for um grupo, verifique seus filhos
+      if (object instanceof fabric.Group) {
+        const objects = object.getObjects();
+        for (const obj of objects) {
+          if (obj.data && obj.data.type === 'node') {
+            return {
+              id: obj.data.id,
+              type: obj.data.nodeType || 'unknown'
+            };
+          }
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Error getting node from event:", error);
+      return null;
+    }
   }
 }
