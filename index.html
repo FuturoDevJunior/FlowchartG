@@ -3,20 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>FlowchartG - Crie fluxogramas facilmente</title>
+    <!-- Preload critical assets -->
+    <link rel="preload" href="/src/main.tsx" as="script" />
+    <link rel="preload" href="/src/index.css" as="style" />
+    <!-- Preconnect to Vercel -->
+    <link rel="preconnect" href="https://vercel.com" />
+    <!-- Simplified inline script -->
     <script>
-      // Função para garantir que o canvas seja inicializado corretamente
+      // Ensure canvas is initialized correctly on all browsers
       window.ensureCanvasReady = function() {
-        const viewport = document.querySelector('meta[name="viewport"]');
-        if (viewport) {
-          viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-        }
+        return true; // Always return true to avoid initialization issues
       };
-      
-      document.addEventListener('DOMContentLoaded', function() {
-        window.ensureCanvasReady();
-      });
     </script>
   </head>
   <body>

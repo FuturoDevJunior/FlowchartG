@@ -1,59 +1,42 @@
 /**
- * Polyfills e adaptações para garantir que fabric.js funcione em diferentes navegadores
- * 
- * Este arquivo deve ser importado antes de qualquer uso do fabric.js
+ * Polyfills simples para garantir compatibilidade do fabric.js em diferentes navegadores
  */
 
 // Garantir que os objetos globais necessários existam
 if (typeof window !== 'undefined') {
-  // Garantir que os métodos de canvas existam
+  // Adicionar polyfill para setLineDash se necessário
   if (typeof HTMLCanvasElement !== 'undefined') {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-
-    // Verificar se os métodos necessários existem
+    
     if (ctx && !ctx.setLineDash) {
-      console.log('⚠️ Adicionando polyfill para setLineDash');
       // @ts-ignore
       ctx.setLineDash = function() {};
     }
   }
-
-  // Função para verificar se o navegador suporta todas as funcionalidades necessárias
+  
+  // Verificar se o requestAnimationFrame existe (necessário para o fabric.js)
+  if (!window.requestAnimationFrame) {
+    window.requestAnimationFrame = function(callback) {
+      return window.setTimeout(callback, 1000 / 60);
+    };
+  }
+  
+  if (!window.cancelAnimationFrame) {
+    window.cancelAnimationFrame = function(id) {
+      clearTimeout(id);
+    };
+  }
+  
+  // Função simples para preparar o ambiente
   window.ensureCanvasReady = function() {
-    console.log('🔄 Verificando compatibilidade com fabric.js');
-    
-    // Verificar suporte a canvas
-    const hasCanvas = !!document.createElement('canvas').getContext;
-    if (!hasCanvas) {
-      console.error('❌ Este navegador não suporta o elemento canvas');
-      return false;
+    // Ajuste de viewport para melhor experiência em dispositivos móveis
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
     }
-    
-    // Verificar suporte a funcionalidades do ES6 necessárias
-    const hasES6 = typeof Promise !== 'undefined' && 
-                  typeof Symbol !== 'undefined' && 
-                  typeof Map !== 'undefined';
-    if (!hasES6) {
-      console.error('❌ Este navegador não suporta funcionalidades ES6 necessárias');
-      return false;
-    }
-    
-    // Verificar eventos de toque
-    const hasTouchEvents = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    if (hasTouchEvents) {
-      console.log('✅ Suporte a eventos de toque detectado');
-    }
-    
-    // Tudo certo!
-    console.log('✅ Ambiente compatível com fabric.js');
     return true;
   };
-  
-  // Executar a verificação
-  if (window.ensureCanvasReady) {
-    window.ensureCanvasReady();
-  }
 }
 
 // Exportar para que este arquivo seja tratado como um módulo

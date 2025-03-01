@@ -19,49 +19,26 @@ export class FlowchartCanvas {
     width?: number,
     height?: number
   ) {
-    console.log(`🏗️ Construindo FlowchartCanvas para #${canvasId} com dimensões ${width}x${height}`);
-    
     // Use os parâmetros de largura e altura se fornecidos, caso contrário use valores padrão
     const canvasWidth = width || 800;
     const canvasHeight = height || 500;
     
-    // Tentar criar o canvas com máxima compatibilidade
-    try {
-      this.canvas = new fabric.Canvas(canvasId, {
-        width: canvasWidth,
-        height: canvasHeight,
-        backgroundColor: '#f5f5f5',
-        selection: true,
-        preserveObjectStacking: true,
-        renderOnAddRemove: true,
-        stopContextMenu: true,
-      });
-      
-      console.log("✅ Fabric Canvas criado com sucesso");
-      
-      // Adicionar debug para erros de fabric.js
-      fabric.Object.prototype.objectCaching = true;
-      
-      this.canvas.setDimensions({
-        width: canvasWidth,
-        height: canvasHeight
-      });
-      
-      // Verificar se o canvas foi criado corretamente
-      if (!this.canvas.getContext()) {
-        throw new Error("Canvas não foi inicializado corretamente");
-      }
-    } catch (error) {
-      console.error("❌ Erro durante a criação do canvas:", error);
-      // Tentar novamente como fallback
-      this.canvas = new fabric.Canvas(canvasId);
-      this.canvas.setDimensions({
-        width: canvasWidth,
-        height: canvasHeight
-      });
-      console.log("⚠️ Canvas criado em modo fallback");
-    }
+    // Criar canvas de forma simplificada
+    this.canvas = new fabric.Canvas(canvasId, {
+      width: canvasWidth,
+      height: canvasHeight,
+      backgroundColor: '#f5f5f5',
+      selection: true,
+      preserveObjectStacking: true,
+    });
+    
+    // Definir tamanho
+    this.canvas.setDimensions({
+      width: canvasWidth,
+      height: canvasHeight
+    });
 
+    // Inicializar dados
     this.flowchartData = initialData || {
       id: nanoid(),
       name: 'Untitled Flowchart',
@@ -71,46 +48,36 @@ export class FlowchartCanvas {
       updatedAt: new Date().toISOString(),
     };
 
+    // Callback para mudanças
     this.onChangeCallback = onChange || (() => {});
 
-    console.log("🔄 Configurando event listeners...");
+    // Configurar event listeners
     this.setupEventListeners();
     
+    // Carregar dados iniciais
     if (initialData) {
-      console.log("🔄 Carregando dados iniciais...");
-      try {
-        this.loadFromData(initialData);
-        console.log("✅ Dados iniciais carregados com sucesso");
-      } catch (error) {
-        console.error("❌ Erro ao carregar dados iniciais:", error);
-      }
+      this.loadFromData(initialData);
     }
 
-    // Handle window resize
-    console.log("🔄 Adicionando event listener para redimensionamento...");
+    // Adicionar event listener para redimensionamento
     window.addEventListener('resize', this.handleWindowResize);
     
-    // Marca canvas como inicializado
+    // Marcar canvas como inicializado
     this.isInitialized = true;
-    console.log("✅ FlowchartCanvas totalmente inicializado");
     
-    // Forçar uma renderização para garantir que tudo seja exibido corretamente
+    // Forçar uma renderização inicial
     setTimeout(() => {
       this.canvas.renderAll();
-      console.log("🔄 Renderização inicial forçada");
     }, 100);
   }
 
-  // Método para lidar com eventos de redimensionamento de janela
+  // Método para lidar com redimensionamento
   private handleWindowResize = (): void => {
-    // Usar o método principal de redimensionamento sem parâmetros
     this.handleResize();
   };
 
-  // Método público para redimensionamento manual ou automático
+  // Método público para redimensionamento
   public handleResize = (width?: number, height?: number): void => {
-    console.log(`🔄 Redimensionando canvas para ${width}x${height || 'auto'}`);
-    // Se width e height forem fornecidos, use-os, caso contrário, use a lógica padrão
     if (width && height) {
       this.canvas.setWidth(width);
       this.canvas.setHeight(height);
@@ -120,35 +87,23 @@ export class FlowchartCanvas {
         const parentWidth = parent.clientWidth;
         const parentHeight = parent.clientHeight;
         
-        console.log(`Dimensões do pai: ${parentWidth}x${parentHeight}`);
-        
         this.canvas.setWidth(parentWidth);
         this.canvas.setHeight(parentHeight);
       } else {
-        console.log("⚠️ Pai do canvas não encontrado, usando valores padrão");
         this.canvas.setWidth(800);
         this.canvas.setHeight(500);
       }
     }
     
-    // Renderizar com atraso para garantir que os tamanhos foram aplicados
+    // Renderizar com atraso
     setTimeout(() => {
       this.canvas.renderAll();
-      console.log("✅ Canvas redimensionado e renderizado");
     }, 50);
   };
 
   private setupEventListeners(): void {
-    try {
-      this.canvas.on('object:moving', this.handleObjectMoving);
-      this.canvas.on('object:modified', this.handleObjectModified);
-      this.canvas.on('mouse:down', (opts: fabric.IEvent) => {
-        console.log("Mouse down no canvas");
-      });
-      console.log("✅ Event listeners configurados com sucesso");
-    } catch (error) {
-      console.error("❌ Erro ao configurar event listeners:", error);
-    }
+    this.canvas.on('object:moving', this.handleObjectMoving);
+    this.canvas.on('object:modified', this.handleObjectModified);
   }
 
   // Método para verificar se o canvas está inicializado
@@ -156,143 +111,135 @@ export class FlowchartCanvas {
     return this.isInitialized && !!this.canvas;
   }
 
-  // Método para adicionar um nó ao canvas - com melhor tratamento de erros
+  // Método para adicionar um nó ao canvas
   public addNode(type: 'rectangle' | 'circle' | 'diamond', x: number, y: number): string {
-    console.log(`🔄 Adicionando nó ${type} na posição (${x}, ${y})`);
-    try {
-      // Verificar se o canvas está pronto
-      if (!this.isCanvasReady()) {
-        throw new Error("Canvas não está pronto");
-      }
-      
-      const nodeId = nanoid();
-      let obj: fabric.Object;
+    if (!this.isCanvasReady()) {
+      throw new Error("Canvas não está pronto");
+    }
+    
+    const nodeId = nanoid();
+    let obj: fabric.Object;
 
-      // Estilo comum
-      const commonOptions = {
-        fill: '#ffffff',
-        stroke: '#000000',
-        strokeWidth: 2,
-        hasControls: true,
-        hasBorders: true,
-        lockScalingFlip: true,
-        cornerStyle: 'circle',
-        cornerColor: '#5F9EA0',
-        cornerSize: 8,
-        transparentCorners: false,
-        data: {
-          id: nodeId,
-          type: 'node',
-          nodeType: type,
-          text: ''
-        }
-      };
-
-      // Default dimensions
-      let width = 120;
-      let height = 60;
-      
-      // Criar forma baseada no tipo
-      if (type === 'rectangle') {
-        obj = new fabric.Rect({
-          ...commonOptions,
-          width: width,
-          height: height,
-          left: x - width/2,
-          top: y - height/2,
-          rx: 5,
-          ry: 5
-        });
-      } else if (type === 'circle') {
-        const radius = 40;
-        width = radius * 2;
-        height = radius * 2;
-        obj = new fabric.Circle({
-          ...commonOptions,
-          radius: radius,
-          left: x - radius,
-          top: y - radius
-        });
-      } else if (type === 'diamond') {
-        // Criar um losango usando um polígono
-        const points = [
-          { x: 0, y: -40 },  // topo
-          { x: 60, y: 0 },   // direita
-          { x: 0, y: 40 },   // base
-          { x: -60, y: 0 }   // esquerda
-        ];
-        width = 120;
-        height = 80;
-        obj = new fabric.Polygon(points, {
-          ...commonOptions,
-          left: x,
-          top: y,
-          originX: 'center',
-          originY: 'center'
-        });
-      } else {
-        throw new Error(`Tipo de nó desconhecido: ${type}`);
-      }
-
-      // Texto dentro da forma
-      const text = new fabric.IText('Texto', {
-        fontSize: 16,
-        fill: '#000000',
-        textAlign: 'center',
-        originX: 'center',
-        originY: 'center',
-        left: type === 'diamond' ? x : x,
-        top: type === 'diamond' ? y : y,
-        data: {
-          nodeId: nodeId
-        },
-        selectable: true,
-        editable: true
-      });
-
-      // Agrupar forma e texto
-      const group = new fabric.Group([obj, text], {
-        left: type === 'diamond' ? x - 60 : obj.left,
-        top: type === 'diamond' ? y - 40 : obj.top,
-        hasControls: true,
-        hasBorders: true,
-        data: {
-          id: nodeId,
-          type: 'node',
-          nodeType: type
-        }
-      });
-
-      // Adicionar ao canvas
-      this.canvas.add(group);
-      this.nodes.set(nodeId, group);
-      
-      // Converter para JSON para o flowchartData
-      const nodeData: FlowchartNode = {
+    // Estilo comum
+    const commonOptions = {
+      fill: '#ffffff',
+      stroke: '#000000',
+      strokeWidth: 2,
+      hasControls: true,
+      hasBorders: true,
+      lockScalingFlip: true,
+      cornerStyle: 'circle',
+      cornerColor: '#5F9EA0',
+      cornerSize: 8,
+      transparentCorners: false,
+      data: {
         id: nodeId,
-        type: type,
-        x: x,
-        y: y,
+        type: 'node',
+        nodeType: type,
+        text: ''
+      }
+    };
+
+    // Default dimensions
+    let width = 120;
+    let height = 60;
+    
+    // Criar forma baseada no tipo
+    if (type === 'rectangle') {
+      obj = new fabric.Rect({
+        ...commonOptions,
         width: width,
         height: height,
-        text: 'Texto',
-        fill: '#ffffff',
-        stroke: '#000000'
-      };
-      
-      // Atualizar flowchartData
-      this.flowchartData.nodes.push(nodeData);
-      
-      // Salvar estado
-      this.saveState();
-      this.canvas.renderAll();
-      console.log(`✅ Nó ${type} adicionado com sucesso, ID: ${nodeId}`);
-      
-      return nodeId;
-    } catch (error) {
-      console.error(`❌ Erro ao adicionar nó ${type}:`, error);
-      throw error;
+        left: x - width/2,
+        top: y - height/2,
+        rx: 5,
+        ry: 5
+      });
+    } else if (type === 'circle') {
+      const radius = 40;
+      width = radius * 2;
+      height = radius * 2;
+      obj = new fabric.Circle({
+        ...commonOptions,
+        radius: radius,
+        left: x - radius,
+        top: y - radius
+      });
+    } else if (type === 'diamond') {
+      // Criar um losango usando um polígono
+      const points = [
+        { x: 0, y: -40 },  // topo
+        { x: 60, y: 0 },   // direita
+        { x: 0, y: 40 },   // base
+        { x: -60, y: 0 }   // esquerda
+      ];
+      width = 120;
+      height = 80;
+      obj = new fabric.Polygon(points, {
+        ...commonOptions,
+        left: x,
+        top: y,
+        originX: 'center',
+        originY: 'center'
+      });
+    } else {
+      throw new Error(`Tipo de nó desconhecido: ${type}`);
     }
+
+    // Texto dentro da forma
+    const text = new fabric.IText('Texto', {
+      fontSize: 16,
+      fill: '#000000',
+      textAlign: 'center',
+      originX: 'center',
+      originY: 'center',
+      left: type === 'diamond' ? x : x,
+      top: type === 'diamond' ? y : y,
+      data: {
+        nodeId: nodeId
+      },
+      selectable: true,
+      editable: true
+    });
+
+    // Agrupar forma e texto
+    const group = new fabric.Group([obj, text], {
+      left: type === 'diamond' ? x - 60 : obj.left,
+      top: type === 'diamond' ? y - 40 : obj.top,
+      hasControls: true,
+      hasBorders: true,
+      data: {
+        id: nodeId,
+        type: 'node',
+        nodeType: type
+      }
+    });
+
+    // Adicionar ao canvas
+    this.canvas.add(group);
+    this.nodes.set(nodeId, group);
+    
+    // Converter para JSON para o flowchartData
+    const nodeData: FlowchartNode = {
+      id: nodeId,
+      type: type,
+      x: x,
+      y: y,
+      width: width,
+      height: height,
+      text: 'Texto',
+      fill: '#ffffff',
+      stroke: '#000000'
+    };
+    
+    // Atualizar flowchartData
+    this.flowchartData.nodes.push(nodeData);
+    
+    // Salvar estado
+    this.saveState();
+    this.canvas.renderAll();
+    
+    return nodeId;
   }
 
   public addConnector(fromId: string, toId: string): string {
@@ -554,7 +501,6 @@ export class FlowchartCanvas {
   }
 
   public exportAsImage(format: 'png' | 'svg' = 'png'): string {
-    console.log(`🔄 Exportando fluxograma como ${format}`);
     try {
       if (format === 'png') {
         return this.canvas.toDataURL({
@@ -565,7 +511,7 @@ export class FlowchartCanvas {
         return this.canvas.toSVG();
       }
     } catch (error) {
-      console.error(`❌ Erro ao exportar como ${format}:`, error);
+      console.error(`Error exporting as ${format}:`, error);
       throw error;
     }
   }
@@ -580,115 +526,94 @@ export class FlowchartCanvas {
   }
 
   public destroy(): void {
-    console.log("🧹 Destruindo FlowchartCanvas");
-    try {
-      window.removeEventListener('resize', this.handleWindowResize);
-      this.canvas.dispose();
-      this.isInitialized = false;
-      console.log("✅ FlowchartCanvas destruído com sucesso");
-    } catch (error) {
-      console.error("❌ Erro ao destruir canvas:", error);
-    }
+    window.removeEventListener('resize', this.handleWindowResize);
+    this.canvas.dispose();
+    this.isInitialized = false;
   }
 
   public deleteSelectedObjects(): void {
-    console.log("🔄 Excluindo objetos selecionados");
-    try {
-      const activeObjects = this.canvas.getActiveObjects();
-      
-      if (activeObjects.length === 0) {
-        console.log("ℹ️ Nenhum objeto selecionado para excluir");
-        return;
+    const activeObjects = this.canvas.getActiveObjects();
+    
+    if (activeObjects.length === 0) {
+      return;
+    }
+    
+    // Remove os objetos selecionados
+    activeObjects.forEach((obj: fabric.Object) => {
+      // Se for um nó, remover também os conectores associados
+      if (obj.data?.type === 'node') {
+        const nodeId = obj.data.id;
+        
+        // Encontrar e remover conectores associados a este nó
+        this.flowchartData.connectors = this.flowchartData.connectors.filter(
+          (connector) => connector.from !== nodeId && connector.to !== nodeId
+        );
+        
+        // Remover conectores do canvas
+        this.connectors.forEach((connector, id) => {
+          if (connector.data?.from === nodeId || connector.data?.to === nodeId) {
+            this.canvas.remove(connector);
+            this.connectors.delete(id);
+          }
+        });
+        
+        // Remover o nó do mapa de nós
+        this.nodes.delete(nodeId);
       }
       
-      // Remove os objetos selecionados
-      activeObjects.forEach((obj: fabric.Object) => {
-        // Se for um nó, remover também os conectores associados
-        if (obj.data?.type === 'node') {
-          const nodeId = obj.data.id;
-          console.log(`Removendo nó com ID: ${nodeId}`);
-          
-          // Encontrar e remover conectores associados a este nó
-          this.flowchartData.connectors = this.flowchartData.connectors.filter(
-            (connector) => connector.from !== nodeId && connector.to !== nodeId
-          );
-          
-          // Remover conectores do canvas
-          this.connectors.forEach((connector, id) => {
-            if (connector.data?.from === nodeId || connector.data?.to === nodeId) {
-              this.canvas.remove(connector);
-              this.connectors.delete(id);
-              console.log(`Conector ${id} removido`);
-            }
-          });
-          
-          // Remover o nó do mapa de nós
-          this.nodes.delete(nodeId);
-        }
-        
-        // Remover o objeto do canvas
-        this.canvas.remove(obj);
-      });
-      
-      this.canvas.discardActiveObject();
-      this.canvas.requestRenderAll();
-      this.updateFlowchartData();
-      console.log("✅ Objetos excluídos com sucesso");
-    } catch (error) {
-      console.error("❌ Erro ao excluir objetos:", error);
-    }
+      // Remover o objeto do canvas
+      this.canvas.remove(obj);
+    });
+    
+    this.canvas.discardActiveObject();
+    this.canvas.requestRenderAll();
+    this.updateFlowchartData();
   }
 
   private updateFlowchartData(): void {
-    console.log("🔄 Atualizando flowchartData com base no canvas");
-    try {
-      // Atualizar nós
-      const updatedNodes: FlowchartNode[] = [];
-      this.nodes.forEach((obj, id) => {
-        if (obj && obj.data) {
-          // Encontrar o texto dentro do grupo
-          let text = 'Texto';
-          if (obj instanceof fabric.Group) {
-            const textObj = obj.getObjects().find(
-              (o: fabric.Object) => o instanceof fabric.IText || o instanceof fabric.Text
-            );
-            if (textObj) {
-              text = (textObj as fabric.IText).text || 'Texto';
-            }
+    // Atualizar nós
+    const updatedNodes: FlowchartNode[] = [];
+    this.nodes.forEach((obj, id) => {
+      if (obj && obj.data) {
+        // Encontrar o texto dentro do grupo
+        let text = 'Texto';
+        if (obj instanceof fabric.Group) {
+          const textObj = obj.getObjects().find(
+            (o: fabric.Object) => o instanceof fabric.IText || o instanceof fabric.Text
+          );
+          if (textObj) {
+            text = (textObj as fabric.IText).text || 'Texto';
           }
-          
-          // Determine width and height based on object type
-          let width = 120; // default
-          let height = 60; // default
-          
-          if (obj.width && obj.height) {
-            width = obj.width;
-            height = obj.height;
-          }
-          
-          updatedNodes.push({
-            id: id,
-            type: obj.data.nodeType || 'rectangle',
-            x: obj.left || 0,
-            y: obj.top || 0,
-            width: width,
-            height: height,
-            text: text,
-            fill: obj.fill as string || '#ffffff',
-            stroke: obj.stroke as string || '#000000'
-          });
         }
-      });
-      
-      // Atualizar flowchartData
-      this.flowchartData.nodes = updatedNodes;
-      
-      // Salvar estado
-      this.saveState();
-      console.log("✅ flowchartData atualizado com sucesso");
-    } catch (error) {
-      console.error("❌ Erro ao atualizar flowchartData:", error);
-    }
+        
+        // Determine width and height based on object type
+        let width = 120; // default
+        let height = 60; // default
+        
+        if (obj.width && obj.height) {
+          width = obj.width;
+          height = obj.height;
+        }
+        
+        updatedNodes.push({
+          id: id,
+          type: obj.data.nodeType || 'rectangle',
+          x: obj.left || 0,
+          y: obj.top || 0,
+          width: width,
+          height: height,
+          text: text,
+          fill: obj.fill as string || '#ffffff',
+          stroke: obj.stroke as string || '#000000'
+        });
+      }
+    });
+    
+    // Atualizar flowchartData
+    this.flowchartData.nodes = updatedNodes;
+    
+    // Salvar estado
+    this.saveState();
   }
 
   private handleObjectMoving = (e: fabric.IEvent): void => {
