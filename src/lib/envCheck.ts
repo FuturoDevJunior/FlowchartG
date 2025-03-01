@@ -5,8 +5,7 @@
 
 export function checkRequiredEnvVars(): boolean {
   const requiredVars = [
-    'VITE_SUPABASE_URL',
-    'VITE_SUPABASE_ANON_KEY'
+    'VITE_LOCAL_STORAGE_KEY'
   ];
 
   const missingVars = requiredVars.filter(

@@ -1,7 +1,6 @@
 // @ts-expect-error Fabric.js types are not fully compatible with TypeScript
 import { fabric } from 'fabric';
 import { FlowchartNode, FlowchartConnector, FlowchartData } from '../types';
-// @ts-expect-error nanoid has ESM export but we're importing it in a CommonJS-like way
 import { nanoid } from 'nanoid';
 
 // Extended canvas interface with custom properties and preserved fabric.Canvas methods
@@ -21,7 +20,7 @@ interface ExtendedCanvas extends fabric.Canvas {
   getElement(): HTMLCanvasElement;
   setWidth(value: number): fabric.Canvas;
   setHeight(value: number): fabric.Canvas;
-  on(event: string, handler: (options: any) => void): fabric.Canvas;
+  on(event: string, handler: (options: MouseEventOptions) => void): fabric.Canvas;
   width: number;
   height: number;
   viewportTransform?: number[];
@@ -31,8 +30,27 @@ interface ExtendedCanvas extends fabric.Canvas {
   getActiveObjects(): fabric.Object[];
   discardActiveObject(): fabric.Canvas;
   dispose(): void;
-  toDataURL(options?: any): string;
-  toSVG(options?: any): string;
+  toDataURL(options?: {
+    format?: string;
+    quality?: number;
+    multiplier?: number;
+    left?: number;
+    top?: number;
+    width?: number;
+    height?: number;
+  }): string;
+  toSVG(options?: {
+    suppressPreamble?: boolean;
+    viewBox?: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    };
+    encoding?: string;
+    width?: number;
+    height?: number;
+  }): string;
 }
 
 // Helper type for mouse events that works with both mouse and touch events
@@ -908,7 +926,7 @@ export class FlowchartCanvas {
     this.updateConnectorsPositions(e.target);
   };
   
-  private handleObjectModified = (_: fabric.IEvent): void => {
+  private handleObjectModified = (): void => {
     this.updateFlowchartData();
   };
   

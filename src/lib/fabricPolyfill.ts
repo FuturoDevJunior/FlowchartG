@@ -6,7 +6,7 @@
 if (typeof window !== 'undefined') {
   // Touch events polyfill for mobile devices
   if (!window.TouchEvent && 'ontouchstart' in window) {
-    // @ts-ignore
+    // @ts-expect-error Creating a polyfill constructor
     window.TouchEvent = function() {};
   }
 
@@ -15,9 +15,12 @@ if (typeof window !== 'undefined') {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
+    // Add missing setLineDash method if needed
     if (ctx && !ctx.setLineDash) {
-      // @ts-ignore
-      ctx.setLineDash = function() {};
+      Object.defineProperty(ctx, 'setLineDash', {
+        value: function() { return; },
+        writable: false
+      });
     }
   }
   
@@ -34,18 +37,7 @@ if (typeof window !== 'undefined') {
     };
   }
   
-  // Passive event listeners for better scrolling performance on mobile
-  try {
-    // Test if passive is supported
-    const opts = Object.defineProperty({}, 'passive', {
-      // @ts-ignore
-      get: function() { return true; }
-    });
-    // @ts-ignore
-    window.addEventListener('test', null, opts);
-  } catch (e) {
-    // Do nothing, just prevent error
-  }
+  // Passive event listeners are handled by modern browsers automatically
   
   // Enhanced viewport settings function
   window.ensureCanvasReady = function() {
@@ -80,9 +72,13 @@ if (typeof window !== 'undefined') {
     }, 200); // Small delay to ensure height is updated
   });
   
-  // Fix for some mobile browser issues
-  if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream) {
-    (document.documentElement.style as any).WebkitTapHighlightColor = 'transparent';
+  // Fix for iOS tap highlight (using a try-catch to avoid TypeScript errors)
+  try {
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+      document.documentElement.style.setProperty('-webkit-tap-highlight-color', 'transparent');
+    }
+  } catch {
+    // Ignore errors if property isn't supported
   }
 }
 

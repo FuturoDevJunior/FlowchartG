@@ -129,8 +129,8 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
       if (fabricCanvasRef.current) {
         try {
           fabricCanvasRef.current.destroy();
-        } catch (e) {
-          console.error("Error destroying canvas:", e);
+        } catch (_) {
+          // Ignore errors
         }
         fabricCanvasRef.current = null;
       }
@@ -313,7 +313,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     if (fabricCanvasRef.current) {
       try {
         fabricCanvasRef.current.destroy();
-      } catch (e) {
+      } catch (_) {
         // Ignore errors
       }
       fabricCanvasRef.current = null;
