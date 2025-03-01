@@ -11,10 +11,20 @@ export class FlowchartCanvas {
   private flowchartData: FlowchartData;
   private onChangeCallback: (data: FlowchartData) => void;
 
-  constructor(canvasId: string, initialData?: FlowchartData, onChange?: (data: FlowchartData) => void) {
+  constructor(
+    canvasId: string, 
+    initialData?: FlowchartData, 
+    onChange?: (data: FlowchartData) => void,
+    width?: number,
+    height?: number
+  ) {
+    // Use os parâmetros de largura e altura se fornecidos, caso contrário use valores padrão
+    const canvasWidth = width || window.innerWidth;
+    const canvasHeight = height || window.innerHeight - 100;
+    
     this.canvas = new fabric.Canvas(canvasId, {
-      width: window.innerWidth,
-      height: window.innerHeight - 100,
+      width: canvasWidth,
+      height: canvasHeight,
       backgroundColor: '#f5f5f5',
       selection: true,
       preserveObjectStacking: true,
@@ -38,17 +48,30 @@ export class FlowchartCanvas {
     }
 
     // Handle window resize
-    window.addEventListener('resize', this.handleResize);
+    window.addEventListener('resize', this.handleWindowResize);
   }
 
-  public handleResize = (): void => {
-    const parent = this.canvas.getElement().parentElement;
-    if (parent) {
-      this.canvas.setWidth(parent.clientWidth);
-      this.canvas.setHeight(parent.clientHeight);
+  // Método para lidar com eventos de redimensionamento de janela
+  private handleWindowResize = (): void => {
+    // Usar o método principal de redimensionamento sem parâmetros
+    this.handleResize();
+  };
+
+  // Método público para redimensionamento manual ou automático
+  public handleResize = (width?: number, height?: number): void => {
+    // Se width e height forem fornecidos, use-os, caso contrário, use a lógica padrão
+    if (width && height) {
+      this.canvas.setWidth(width);
+      this.canvas.setHeight(height);
     } else {
-      this.canvas.setWidth(window.innerWidth);
-      this.canvas.setHeight(window.innerHeight - 100);
+      const parent = this.canvas.getElement().parentElement;
+      if (parent) {
+        this.canvas.setWidth(parent.clientWidth);
+        this.canvas.setHeight(parent.clientHeight);
+      } else {
+        this.canvas.setWidth(window.innerWidth);
+        this.canvas.setHeight(window.innerHeight - 100);
+      }
     }
     this.canvas.renderAll();
   };
@@ -509,7 +532,7 @@ export class FlowchartCanvas {
   }
 
   public destroy(): void {
-    window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener('resize', this.handleWindowResize);
     this.canvas.dispose();
   }
 
