@@ -44,5 +44,16 @@ export default tseslint.config(
       'react-hooks/exhaustive-deps': 'warn',
       '@typescript-eslint/no-explicit-any': 'error'
     }
+  },
+  // Configuração específica para arquivos CommonJS
+  {
+    files: ['**/*.cjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        module: 'writable'
+      },
+      sourceType: 'commonjs'
+    }
   }
 );

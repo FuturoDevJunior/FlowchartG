@@ -25,7 +25,6 @@
     "docker:run": "docker run -p 8080:80 flowchart-g",
     "docker:compose": "docker-compose up -d",
     "docker:stop": "docker-compose down",
-    "prepare": "npm run type-check",
     "start": "npm run preview",
     "predeploy": "npm run build",
     "deploy:github": "npm install -D gh-pages && npx gh-pages -d dist"
