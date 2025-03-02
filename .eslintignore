@@ -6,4 +6,5 @@ build/
 
 # Files
 *.min.js
-*.bundle.js 
+*.bundle.js
+jest.config.cjs 

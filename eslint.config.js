@@ -8,6 +8,15 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'coverage/**',
+      'build/**',
+      '**/*.min.js',
+      '**/*.bundle.js',
+      'jest.config.cjs'
+    ],
     languageOptions: {
       globals: {
         ...globals.browser,
