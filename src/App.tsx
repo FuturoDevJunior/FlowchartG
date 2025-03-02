@@ -48,7 +48,7 @@ function App() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-800 flex items-center justify-center">
-        <div className="loading-spinner" />
+        <div className="loading-spinner" data-cy="loading-spinner" />
       </div>
     );
   }
@@ -57,11 +57,12 @@ function App() {
   if (loadError) {
     return (
       <div className="min-h-screen bg-gray-800 flex flex-col items-center justify-center p-4">
-        <div className="text-white text-xl mb-4">Erro ao Carregar</div>
-        <div className="text-gray-300 max-w-md text-center mb-6">{loadError}</div>
+        <div className="text-white text-xl mb-4" data-cy="error-title">Erro ao Carregar</div>
+        <div className="text-gray-300 max-w-md text-center mb-6" data-cy="error-message">{loadError}</div>
         <button 
           onClick={() => window.location.reload()}
           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          data-cy="retry-button"
         >
           Tentar novamente
         </button>
@@ -72,7 +73,7 @@ function App() {
   // Main application render - local storage only version
   return (
     <Layout>
-      <div className="bg-green-700 text-white px-4 py-2 text-center text-sm mb-2">
+      <div className="bg-green-700 text-white px-4 py-2 text-center text-sm mb-2" data-cy="local-mode-banner">
         Modo local: Seus diagramas são salvos automaticamente no seu navegador
       </div>
       <FlowchartEditor

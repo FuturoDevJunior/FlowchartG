@@ -39,5 +39,10 @@ jobs:
           config-file: cypress.config.cjs
           start: npm run preview
           wait-on: 'http://localhost:4173'
+          wait-on-timeout: 120
           browser: chrome
-          record: false 
+          record: false
+        env:
+          CYPRESS_baseUrl: 'http://localhost:4173'
+          CYPRESS_INCLUDE_SCREENSHOTS: true
+          CYPRESS_VIDEO: false 

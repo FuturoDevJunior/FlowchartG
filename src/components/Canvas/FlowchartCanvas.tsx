@@ -7,7 +7,7 @@ interface FabricObject extends fabric.Object {
   id?: string;
 }
 
-interface FabricObjectEventData {
+interface FabricObjectEventData extends fabric.IEvent {
   target?: FabricObject;
 }
 
@@ -71,14 +71,14 @@ const FlowchartCanvas: React.FC<CanvasProps> = ({
   // Função para configurar o canvas
   const setupCanvas = (canvas: fabric.Canvas) => {
     // Configurar eventos do canvas
-    canvas.on('object:selected', (e: FabricObjectEventData) => {
+    canvas.on<FabricObjectEventData>('object:selected', (e) => {
       const obj = e.target;
       if (obj && obj.id && onNodeSelect) {
         onNodeSelect(obj.id);
       }
     });
     
-    canvas.on('object:moved', (e: FabricObjectEventData) => {
+    canvas.on<FabricObjectEventData>('object:moved', (e) => {
       const obj = e.target;
       if (obj && obj.id && onNodeMove && obj.left !== undefined && obj.top !== undefined) {
         onNodeMove(obj.id, obj.left, obj.top);

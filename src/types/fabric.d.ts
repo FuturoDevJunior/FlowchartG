@@ -4,6 +4,26 @@
  */
 
 declare module 'fabric' {
+  export interface IEvent {
+    e: Event;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    target?: Object | any;  // Permitindo qualquer objeto como alvo para facilitar a extensão
+    subTargets?: Object[];
+    button?: number;
+    isClick?: boolean;
+    pointer?: Point;
+    absolutePointer?: Point;
+    transform?: Transform;
+  }
+  
+  export interface Transform {
+    corner: string;
+    original: Object;
+    originX: string;
+    originY: string;
+    width: number;
+  }
+  
   export class Canvas {
     constructor(element: HTMLCanvasElement | string, options?: Record<string, unknown>);
     add(...objects: Object[]): Canvas;
@@ -18,7 +38,7 @@ declare module 'fabric' {
     setBackgroundColor(color: string, callback?: () => void): Canvas;
     getObjects(): Object[];
     item(index: number): Object;
-    on(event: string, handler: (e: unknown) => void): Canvas;
+    on<T = IEvent>(event: string, handler: (e: T) => void): Canvas;
     off(event: string, handler: (e: unknown) => void): Canvas;
     getElement(): HTMLCanvasElement;
     getCenter(): { top: number; left: number };
