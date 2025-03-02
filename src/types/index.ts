@@ -27,7 +27,7 @@ export interface Style {
 export type NodeType = 'rectangle' | 'circle' | 'diamond';
 
 /**
- * Flowchart node
+ * Flowchart node (canvas representation)
  */
 export interface Node {
   id: string;
@@ -38,6 +38,26 @@ export interface Node {
   width?: number;
   height?: number;
   radius?: number;
+  // Propriedades adicionais para compatibilidade com fabricCanvas
+  x?: number;
+  y?: number;
+  fill?: string;
+  stroke?: string;
+}
+
+/**
+ * Internal representation of node for fabricCanvas
+ */
+export interface FlowchartNode {
+  id: string;
+  type: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  text: string;
+  fill: string;
+  stroke: string;
 }
 
 /**
@@ -53,11 +73,28 @@ export interface Connection {
 }
 
 /**
+ * Internal representation of connection for fabricCanvas
+ */
+export interface FlowchartConnector {
+  id: string;
+  from: string;
+  to: string;
+  stroke?: string;
+  strokeWidth?: number;
+  arrow?: boolean;
+}
+
+/**
  * Complete flowchart data structure
  */
 export interface FlowchartData {
+  id?: string;
+  name?: string;
   nodes: Node[];
   connections: Connection[];
+  selectedNodeType?: 'rectangle' | 'circle' | 'diamond';
+  createdAt?: string;
+  updatedAt?: string;
   metadata?: {
     title?: string;
     description?: string;
@@ -65,6 +102,7 @@ export interface FlowchartData {
     createdAt?: number;
     updatedAt?: number;
     version?: string;
+    [key: string]: unknown;
   };
 }
 

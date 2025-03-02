@@ -1,12 +1,16 @@
 import React from 'react';
-import { Download, Share, Github } from 'lucide-react';
+import { Download, Share, Github, Moon, Sun } from 'lucide-react';
 import Button from '../atoms/Button';
+import useTheme from '../../hooks/useTheme';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  // Usando o hook de tema
+  const { toggleTheme, isDark } = useTheme();
+
   // Função para exportar o diagrama
   const handleExport = () => {
     // Esta função será implementada posteriormente
@@ -22,8 +26,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#2A2A2A] flex flex-col">
-      <header className="bg-[#2A2A2A] text-white p-4 flex items-center justify-between border-b border-gray-700">
+    <div className={`min-h-screen flex flex-col ${isDark ? 'bg-[#2A2A2A]' : 'bg-gray-50'}`}>
+      <header className={`${isDark ? 'bg-[#2A2A2A] text-white border-gray-700' : 'bg-white text-gray-800 border-gray-200'} p-4 flex items-center justify-between border-b`}>
         <div className="flex items-center">
           <svg
             width="32"
@@ -47,14 +51,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             />
           </svg>
           <h1 className="text-xl font-bold">FlowchartG</h1>
-          <span className="ml-2 text-xs text-gray-400">Crie fluxogramas facilmente</span>
+          <span className={`ml-2 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Crie fluxogramas facilmente</span>
         </div>
         
         <div className="flex gap-2">
           <Button
             variant="ghost"
+            onClick={toggleTheme}
+            className={`${isDark ? 'text-white hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-200'}`}
+            title={isDark ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+          >
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          </Button>
+          
+          <Button
+            variant="ghost"
             onClick={handleExport}
-            className="text-white hover:bg-gray-700"
+            className={`${isDark ? 'text-white hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-200'}`}
           >
             <Download size={18} className="mr-1" />
             <span className="hidden sm:inline">Exportar</span>
@@ -63,7 +76,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <Button
             variant="ghost"
             onClick={handleShare}
-            className="text-white hover:bg-gray-700"
+            className={`${isDark ? 'text-white hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-200'}`}
           >
             <Share size={18} className="mr-1" />
             <span className="hidden sm:inline">Compartilhar</span>
@@ -73,7 +86,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             href="https://github.com/FuturoDevJunior/FlowchartG" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="inline-flex items-center px-3 py-1.5 text-sm text-white bg-transparent hover:bg-gray-700 rounded-md transition-colors"
+            className={`inline-flex items-center px-3 py-1.5 text-sm ${isDark ? 'text-white hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-200'} rounded-md transition-colors`}
           >
             <Github size={18} className="mr-1" />
             <span className="hidden sm:inline">GitHub</span>
@@ -85,7 +98,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {children}
       </main>
       
-      <footer className="bg-[#1A1A1A] text-gray-400 text-xs p-2 text-center">
+      <footer className={`${isDark ? 'bg-[#1A1A1A] text-gray-400' : 'bg-gray-100 text-gray-600'} text-xs p-2 text-center`}>
         FlowchartG - Ferramenta simples para criação de fluxogramas. Dados salvos apenas localmente.
       </footer>
     </div>

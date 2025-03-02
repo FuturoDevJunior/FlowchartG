@@ -92,7 +92,7 @@ interface MouseEventOptions {
 export class FlowchartCanvas {
   private canvas: ExtendedCanvas;
   private nodes: Map<string, fabric.Object> = new Map();
-  private connectors: Map<string, fabric.Object> = new Map();
+  private connections: Map<string, fabric.Object> = new Map();
   private flowchartData: FlowchartData;
   private onChangeCallback: (data: FlowchartData) => void;
   private isInitialized: boolean = false;
@@ -138,7 +138,7 @@ export class FlowchartCanvas {
       id: nanoid(),
       name: 'Untitled Flowchart',
       nodes: [],
-      connectors: [],
+      connections: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -195,7 +195,7 @@ export class FlowchartCanvas {
       // Get all objects - incluir tanto nós quanto conectores
       const allObjects = [
         ...Array.from(this.nodes.values()),
-        ...Array.from(this.connectors.values())
+        ...Array.from(this.connections.values())
       ];
       
       if (allObjects.length === 0) return;
@@ -515,7 +515,7 @@ export class FlowchartCanvas {
     return nodeId;
   }
 
-  public addConnector(fromId: string, toId: string): string {
+  public addConnection(fromId: string, toId: string): string {
     const id = nanoid();
     const fromNode = this.nodes.get(fromId);
     const toNode = this.nodes.get(toId);
@@ -568,7 +568,7 @@ export class FlowchartCanvas {
         id, 
         fromId, 
         toId, 
-        type: 'connector' 
+        type: 'connection' 
       }
     });
     
@@ -595,8 +595,8 @@ export class FlowchartCanvas {
       }),
     });
     
-    // Create connector group
-    const connector = new fabric.Group([path, arrowHead], {
+    // Create connection group
+    const connection = new fabric.Group([path, arrowHead], {
       hasControls: false,
       hasBorders: false,
       lockScalingX: true,
@@ -607,22 +607,22 @@ export class FlowchartCanvas {
         id, 
         fromId, 
         toId, 
-        type: 'connector' 
+        type: 'connection' 
       }
     });
 
     // Add to canvas
-    this.canvas.add(connector);
-    this.connectors.set(id, connector);
+    this.canvas.add(connection);
+    this.connections.set(id, connection);
     
-    // Garante que o conector aparece acima (bringToFront)
-    connector.bringToFront();
+    // Garante que o connection aparece acima (bringToFront)
+    connection.bringToFront();
     
-    // Atualiza o conector uma vez para garantir posição correta
-    this.updateConnector(connector);
+    // Atualiza o connection uma vez para garantir posição correta
+    this.updateConnection(connection);
 
     // Add to flowchart data
-    const connectorData: FlowchartConnector = {
+    const connectionData: FlowchartConnector = {
       id,
       from: fromId,
       to: toId,
@@ -631,19 +631,19 @@ export class FlowchartCanvas {
       arrow: true,
     };
 
-    this.flowchartData.connectors.push(connectorData);
+    this.flowchartData.connections.push(connectionData);
     this.saveState();
 
-    // Renderiza o canvas após adicionar o conector
+    // Renderiza o canvas após adicionar o connection
     this.canvas.renderAll();
 
     return id;
   }
 
-  private updateConnector(connector: fabric.Object): void {
-    if (!connector.data) return;
+  private updateConnection(connection: fabric.Object): void {
+    if (!connection.data) return;
     
-    const { fromId, toId } = connector.data;
+    const { fromId, toId } = connection.data;
     
     const fromNode = this.nodes.get(fromId);
     const toNode = this.nodes.get(toId);
@@ -667,9 +667,9 @@ export class FlowchartCanvas {
     const cpX = midX + perpX;
     const cpY = midY + perpY;
     
-    if (connector instanceof fabric.Group) {
+    if (connection instanceof fabric.Group) {
       // Get path and arrow from group
-      const items = connector.getObjects();
+      const items = connection.getObjects();
       const path = items[0] as fabric.Path;
       const arrow = items[1] as fabric.Triangle;
       
@@ -700,9 +700,9 @@ export class FlowchartCanvas {
         });
       }
       
-      // Garantir que o conector fique visível
-      connector.bringToFront();
-      connector.setCoords();
+      // Garantir que o connection fique visível
+      connection.bringToFront();
+      connection.setCoords();
     }
     
     // Atualizar estado
@@ -715,13 +715,13 @@ export class FlowchartCanvas {
       this.canvas.remove(node);
       this.nodes.delete(id);
 
-      // Remove associated connectors
-      const connectorsToRemove = this.flowchartData.connectors.filter(
-        (connector) => connector.from === id || connector.to === id
+      // Remove associated connections
+      const connectionsToRemove = this.flowchartData.connections.filter(
+        (connection) => connection.from === id || connection.to === id
       );
 
-      connectorsToRemove.forEach((connector) => {
-        this.removeConnector(connector.id);
+      connectionsToRemove.forEach((connection) => {
+        this.removeConnection(connection.id);
       });
 
       // Update flowchart data
@@ -733,15 +733,15 @@ export class FlowchartCanvas {
     }
   }
 
-  public removeConnector(id: string): void {
-    const connector = this.connectors.get(id);
-    if (connector) {
-      this.canvas.remove(connector);
-      this.connectors.delete(id);
+  public removeConnection(id: string): void {
+    const connection = this.connections.get(id);
+    if (connection) {
+      this.canvas.remove(connection);
+      this.connections.delete(id);
 
       // Update flowchart data
-      this.flowchartData.connectors = this.flowchartData.connectors.filter(
-        (connector) => connector.id !== id
+      this.flowchartData.connections = this.flowchartData.connections.filter(
+        (connection) => connection.id !== id
       );
 
       this.saveState();
@@ -752,7 +752,7 @@ export class FlowchartCanvas {
     // Clear canvas
     this.canvas.clear();
     this.nodes.clear();
-    this.connectors.clear();
+    this.connections.clear();
 
     this.flowchartData = { ...data };
 
@@ -830,14 +830,14 @@ export class FlowchartCanvas {
       this.nodes.set(nodeData.id, group);
     });
 
-    // Add connectors with improved appearance
-    data.connectors.forEach((connectorData) => {
-      const fromNode = this.nodes.get(connectorData.from);
-      const toNode = this.nodes.get(connectorData.to);
+    // Add connections with improved appearance
+    data.connections.forEach((connectionData) => {
+      const fromNode = this.nodes.get(connectionData.from);
+      const toNode = this.nodes.get(connectionData.to);
 
       if (fromNode && toNode) {
-        // Add connector by reusing the addConnector method
-        this.addConnector(connectorData.from, connectorData.to);
+        // Add connection by reusing the addConnection method
+        this.addConnection(connectionData.from, connectionData.to);
       }
     });
 
@@ -889,28 +889,28 @@ export class FlowchartCanvas {
     
     // Remove os objetos selecionados
     activeObjects.forEach((obj: fabric.Object) => {
-      // Se for um nó, remover também os conectores associados
+      // Se for um nó, remover também os connections associados
       if (obj.data?.type === 'node') {
         const nodeId = obj.data.id;
         
-        // Encontrar e remover conectores associados a este nó
-        this.flowchartData.connectors = this.flowchartData.connectors.filter(
-          (connector) => connector.from !== nodeId && connector.to !== nodeId
+        // Encontrar e remover connections associados a este nó
+        this.flowchartData.connections = this.flowchartData.connections.filter(
+          (connection) => connection.from !== nodeId && connection.to !== nodeId
         );
         
-        // Remover conectores do canvas
-        this.connectors.forEach((connector, id) => {
-          if (connector.data?.fromId === nodeId || connector.data?.toId === nodeId) {
-            this.canvas.remove(connector);
-            this.connectors.delete(id);
+        // Remover connections do canvas
+        this.connections.forEach((connection, id) => {
+          if (connection.data?.fromId === nodeId || connection.data?.toId === nodeId) {
+            this.canvas.remove(connection);
+            this.connections.delete(id);
           }
         });
         
         // Remover o nó do mapa de nós
         this.nodes.delete(nodeId);
-      } else if (obj.data?.type === 'connector') {
-        // Remover conectores diretamente
-        this.connectors.delete(obj.data.id);
+      } else if (obj.data?.type === 'connection') {
+        // Remover connections diretamente
+        this.connections.delete(obj.data.id);
       }
       
       // Remover o objeto do canvas
@@ -961,11 +961,11 @@ export class FlowchartCanvas {
       }
     });
     
-    // Atualizar conectores
-    const updatedConnectors: FlowchartConnector[] = [];
-    this.connectors.forEach((obj, id) => {
+    // Atualizar connections
+    const updatedConnections: FlowchartConnector[] = [];
+    this.connections.forEach((obj, id) => {
       if (obj && obj.data) {
-        updatedConnectors.push({
+        updatedConnections.push({
           id: id,
           from: obj.data.fromId,
           to: obj.data.toId,
@@ -978,34 +978,34 @@ export class FlowchartCanvas {
     
     // Atualizar flowchartData
     this.flowchartData.nodes = updatedNodes;
-    this.flowchartData.connectors = updatedConnectors;
+    this.flowchartData.connections = updatedConnections;
     
     // Salvar estado
     this.saveState();
   }
 
   private handleObjectMoving = (e: fabric.IEvent): void => {
-    this.updateConnectorsPositions(e.target);
+    this.updateConnectionsPositions(e.target);
   };
   
   private handleObjectModified = (): void => {
     this.updateFlowchartData();
   };
   
-  // Método para atualizar as posições dos conectores quando um nó é movido
-  private updateConnectorsPositions(target?: fabric.Object | null): void {
+  // Método para atualizar as posições dos connections quando um nó é movido
+  private updateConnectionsPositions(target?: fabric.Object | null): void {
     if (!target || !target.data || target.data.type !== 'node') return;
     
     const nodeId = target.data.id;
     
-    this.connectors.forEach((connector) => {
-      if (!connector.data) return;
+    this.connections.forEach((connection) => {
+      if (!connection.data) return;
       
-      const fromId = connector.data.fromId;
-      const toId = connector.data.toId;
+      const fromId = connection.data.fromId;
+      const toId = connection.data.toId;
       
       if (fromId === nodeId || toId === nodeId) {
-        this.updateConnector(connector);
+        this.updateConnection(connection);
       }
     });
     
@@ -1063,14 +1063,14 @@ export class FlowchartCanvas {
   }
 
   /**
-   * Clears all nodes and connectors from the canvas
+   * Clears all nodes and connections from the canvas
    */
   public clearAll(): void {
     try {
-      // Remove all connectors
-      const connectorIds = Array.from(this.connectors.keys());
-      connectorIds.forEach(id => {
-        this.removeConnector(id);
+      // Remove all connections
+      const connectionIds = Array.from(this.connections.keys());
+      connectionIds.forEach(id => {
+        this.removeConnection(id);
       });
       
       // Remove all nodes
@@ -1092,7 +1092,7 @@ export class FlowchartCanvas {
           id: nanoid(),
           name: 'Novo Fluxograma',
           nodes: [],
-          connectors: [],
+          connections: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };

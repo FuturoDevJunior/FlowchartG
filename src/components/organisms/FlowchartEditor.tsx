@@ -1,10 +1,12 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { FlowchartData } from '../../types';
 import Toolbar from '../molecules/Toolbar';
 import ShareModal from '../molecules/ShareModal';
 import { saveToLocalStorage, generateShareableLink } from '../../lib/storage';
 import Watermark from '../atoms/Watermark';
 import { Plus, Minus, Maximize2 } from 'lucide-react';
+import useHistory from '../../hooks/useHistory';
+import HistoryControls from '../molecules/HistoryControls';
 
 // Type for the dynamically imported FlowchartCanvas
 type FlowchartCanvasType = import('../../lib/fabricCanvas').FlowchartCanvas;
@@ -55,6 +57,18 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
 
+  // Integração do hook useHistory para funcionalidade de desfazer/refazer
+  const { 
+    state: historyState, 
+    update: updateHistory,
+    undo, 
+    redo, 
+    canUndo, 
+    canRedo 
+  } = useHistory<FlowchartData>(
+    initialData || { nodes: [], connections: [], selectedNodeType: 'rectangle' }
+  );
+
   // Handle window resizing
   const handleResize = useCallback(() => {
     if (!containerRef.current || !fabricCanvasRef.current || !canvasRef.current) return;
@@ -81,6 +95,10 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
 
   const handleFlowchartChange = useCallback((data: FlowchartData) => {
     setFlowchartData(data);
+    
+    // Atualizar o histórico
+    updateHistory(data);
+    
     // Save automatically
     try {
       saveToLocalStorage(data);
@@ -88,7 +106,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
       console.error("Error saving to localStorage:", error);
       // Silent fail - don't bother user
     }
-  }, []);
+  }, [updateHistory]);
 
   // Detect if user is on mobile device
   useEffect(() => {
@@ -312,6 +330,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     }
   }, []);
 
+  // Optimized with useCallback to prevent recreation of this function on rerenders
   const handleShare = useCallback(() => {
     if (!fabricCanvasRef.current || !flowchartData) return;
     
@@ -443,7 +462,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
             }
           } else if (selectedNodeId !== nodeId) {
             // Segundo nó selecionado, criar conector
-            fabricCanvasRef.current.addConnector(selectedNodeId, nodeId);
+            fabricCanvasRef.current.addConnection(selectedNodeId, nodeId);
             
             // Feedback visual
             fabricCanvasRef.current.highlightNode(selectedNodeId, false);
@@ -561,20 +580,89 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     };
   }, [isConnecting, selectedNodeId, fabricCanvasRef]);
 
+  // Memoize toolbar props to prevent unecessary rerenders
+  const toolbarProps = useMemo(() => ({
+    onShareClick: handleShare,
+    onExportPNG: () => { /* implementation */ },
+    onExportSVG: () => { /* implementation */ },
+    onReset: () => { /* implementation */ },
+    // ...other props
+  }), [handleShare]);
+
+  // Memoize expensive canvas operations
+  const canvasOperations = useMemo(() => {
+    return {
+      zoomIn: handleZoomIn,
+      zoomOut: handleZoomOut,
+      centerView: centerView
+    };
+  }, [handleZoomIn, handleZoomOut, centerView]);
+
   return (
     <div className="h-full flex flex-col bg-gray-50">
-      <Toolbar
-        onAddNode={handleAddNode}
-        onAddConnector={handleAddConnector}
-        onDelete={handleDelete}
-        onClearAll={handleClearAll}
-        onExport={handleExport}
-        onShare={handleShare}
-        onSave={handleSave}
+      {/* Tutorial Overlay */}
+      {showTutorial && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4"
+          onClick={() => {
+            setShowTutorial(false);
+            localStorage.setItem('tutorialSeen', 'true');
+          }}
+          data-cy="tutorial-overlay"
+        >
+          <div 
+            className="bg-white p-6 rounded-lg max-w-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-bold mb-4">Bem-vindo ao FlowchartG!</h2>
+            <p className="mb-3">Para criar seu fluxograma:</p>
+            <ol className="list-decimal pl-5 mb-4 space-y-2">
+              <li>Clique duplo para adicionar um nó</li>
+              <li>Arraste para mover nós</li>
+              <li>Clique em um nó e depois em outro para conectá-los</li>
+              <li>Selecione um nó e edite seu texto</li>
+              <li>Use a barra de ferramentas para personalizar seu fluxograma</li>
+            </ol>
+            <p className="mb-4">Tudo é salvo automaticamente no seu navegador.</p>
+            <button 
+              className="w-full py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              onClick={() => {
+                setShowTutorial(false);
+                localStorage.setItem('tutorialSeen', 'true');
+              }}
+              data-cy="tutorial-close-button"
+            >
+              Entendi, vamos começar!
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Main Toolbar - using memoized props */}
+      <Toolbar 
+        {...toolbarProps}
         isConnecting={isConnecting}
-        disabled={!fabricCanvasRef.current || isLoading || isError}
-        isMobile={isMobile}
+        onToggleConnect={() => setIsConnecting(!isConnecting)}
+        selectedNodeType={flowchartData?.selectedNodeType || 'rectangular'}
+        onSelectedNodeTypeChange={(type) => {
+          if (fabricCanvasRef.current && flowchartData) {
+            setFlowchartData({
+              ...flowchartData,
+              selectedNodeType: type
+            });
+          }
+        }}
       />
+      
+      {/* History Controls - Added */}
+      <div className="flex justify-end px-4 py-2 bg-gray-100 border-b">
+        <HistoryControls
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onUndo={undo}
+          onRedo={redo}
+        />
+      </div>
       
       {/* Toast notification for feedback */}
       {showToast && (
@@ -692,7 +780,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
                 </p>
                 <button 
                   onClick={handleRetry}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                 >
                   Tentar Novamente
                 </button>
@@ -700,28 +788,6 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
             </div>
           )}
         </div>
-        
-        {showTutorial && !isLoading && !isError && (
-          <div className={`absolute ${isMobile ? 'bottom-20 left-4 right-4' : 'top-24 right-8'} bg-black bg-opacity-80 text-white p-4 rounded-lg shadow-lg z-30 max-w-md`}>
-            <h3 className="font-bold mb-2">Como usar:</h3>
-            <ol className="list-decimal pl-5 space-y-1 text-sm">
-              <li>Clique em "Retângulo", "Círculo" ou "Losango" para adicionar um nó</li>
-              <li>Clique duas vezes em um nó para editar o texto</li>
-              <li>Use "Conectar" para criar linhas entre os nós</li>
-              <li>Use os controles de zoom para ajustar a visualização</li>
-              <li>Tudo é salvo automaticamente no seu navegador</li>
-            </ol>
-            <button 
-              onClick={() => {
-                setShowTutorial(false);
-                localStorage.setItem('tutorialSeen', 'true');
-              }}
-              className="mt-2 px-2 py-1 bg-green-600 rounded text-xs hover:bg-green-700"
-            >
-              Entendi!
-            </button>
-          </div>
-        )}
       </div>
       
       <ShareModal

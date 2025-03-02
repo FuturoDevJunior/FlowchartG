@@ -11,6 +11,7 @@ export interface ButtonProps {
   className?: string;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  title?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -23,7 +24,8 @@ const Button: React.FC<ButtonProps> = ({
   type = 'button',
   className = '',
   onMouseEnter,
-  onMouseLeave
+  onMouseLeave,
+  title
 }) => {
   const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
   
@@ -50,6 +52,7 @@ const Button: React.FC<ButtonProps> = ({
       className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${widthStyle} ${className}`}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      title={title}
     >
       {children}
     </button>
