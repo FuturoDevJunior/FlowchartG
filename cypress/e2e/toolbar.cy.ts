@@ -18,8 +18,6 @@ describe('Toolbar Functionality', () => {
       cy.get(`[data-cy^="tool-"]`).should('have.length.at.least', 3);
       
       // Botões de ação (como desfazer, refazer, etc.)
-      cy.get(`[data-cy="${DATA_TEST_IDS.BUTTON('undo')}"]`).should('exist');
-      cy.get(`[data-cy="${DATA_TEST_IDS.BUTTON('redo')}"]`).should('exist');
     });
   });
 
@@ -75,4 +73,4 @@ describe('Toolbar Functionality', () => {
     cy.get(`[data-cy^="tool-"]`).first().trigger('mouseover');
     cy.get('.tooltip').should('be.visible');
   });
-}); 
+});

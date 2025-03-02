@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { DATA_TEST_IDS } from '../../src/constants/testIds';
 
 describe('Export Functionality', () => {
@@ -83,4 +82,4 @@ describe('Export Functionality', () => {
     // Verificar se o download foi iniciado
     cy.wait('@downloadRequest').its('response.statusCode').should('eq', 200);
   });
-}); 
+});

@@ -267,7 +267,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   }, [showTutorial]);
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  const handleAddNode = useCallback((type: 'rectangle' | 'circle' | 'diamond') => {
+  const _handleAddNode = useCallback((type: 'rectangle' | 'circle' | 'diamond') => {
     if (!fabricCanvasRef.current || !canvasRef.current) return;
     
     try {
@@ -282,7 +282,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     }
   }, []);
 
-  const handleAddConnector = useCallback(() => {
+  const _handleAddConnector = useCallback(() => {
     if (!fabricCanvasRef.current) return;
     
     if (isConnecting) {
@@ -303,7 +303,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     }
   }, [isConnecting, isMobile]);
 
-  const handleDelete = useCallback(() => {
+  const _handleDelete = useCallback(() => {
     if (!fabricCanvasRef.current) return;
     try {
       fabricCanvasRef.current.deleteSelectedObjects();
@@ -312,7 +312,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     }
   }, []);
 
-  const handleExport = useCallback((format: 'png' | 'svg') => {
+  const _handleExport = useCallback((format: 'png' | 'svg') => {
     if (!fabricCanvasRef.current) return;
     
     try {
@@ -411,7 +411,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   }, [handleFlowchartChange, initialData, isMobile]);
 
   // Novo método para limpar toda a tela
-  const handleClearAll = useCallback(() => {
+  const _handleClearAll = useCallback(() => {
     if (!fabricCanvasRef.current) return;
     
     try {
@@ -591,7 +591,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   }), [handleShare]);
 
   // Memoize expensive canvas operations
-  const canvasOperations = useMemo(() => {
+  const _canvasOperations = useMemo(() => {
     return {
       zoomIn: handleZoomIn,
       zoomOut: handleZoomOut,

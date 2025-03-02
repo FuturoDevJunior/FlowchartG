@@ -44,52 +44,16 @@ Cypress.Commands.add('exportDiagram', (type: 'png' | 'svg' | 'json') => {
 });
 
 // Tipos para os comandos personalizados
-// eslint-disable-next-line @typescript-eslint/no-namespace
 declare global {
   namespace Cypress {
     interface Chainable {
-      /**
-       * Espera até que o canvas esteja carregado e visível
-       * @param timeout Tempo máximo de espera em ms
-       */
-      waitForCanvas(timeout?: number): Chainable<JQuery<HTMLElement>>;
-      
-      /**
-       * Seleciona uma ferramenta na barra de ferramentas
-       * @param toolName Nome da ferramenta a ser selecionada
-       */
-      selectTool(toolName: string): Chainable<JQuery<HTMLElement>>;
-      
-      /**
-       * Cria um nó no canvas
-       * @param type Tipo do nó (rectangle, circle, diamond, etc.)
-       * @param x Coordenada X
-       * @param y Coordenada Y
-       */
-      createNode(type: string, x: number, y: number): Chainable<JQuery<HTMLElement>>;
-      
-      /**
-       * Verifica se um nó existe no canvas
-       * @param nodeId ID do nó a ser verificado
-       */
-      nodeExists(nodeId: string): Chainable<JQuery<HTMLElement>>;
-      
-      /**
-       * Alterna entre tema claro e escuro
-       */
-      toggleTheme(): Chainable<JQuery<HTMLElement>>;
-      
-      /**
-       * Verifica se o tema atual é o esperado
-       * @param theme Tema esperado ('light' ou 'dark')
-       */
-      checkTheme(theme: 'light' | 'dark'): Chainable<JQuery<HTMLElement>>;
-      
-      /**
-       * Exporta o diagrama para o formato especificado
-       * @param type Formato de exportação (png, svg, json)
-       */
-      exportDiagram(type: 'png' | 'svg' | 'json'): Chainable<JQuery<HTMLElement>>;
+      waitForCanvas(timeout?: number): Chainable<Element>;
+      selectTool(toolName: string): Chainable<Element>;
+      createNode(type: string, x: number, y: number): Chainable<Element>;
+      nodeExists(nodeId: string): Chainable<Element>;
+      toggleTheme(): Chainable<Element>;
+      checkTheme(theme: 'light' | 'dark'): Chainable<Element>;
+      exportDiagram(type: 'png' | 'svg' | 'json'): Chainable<Element>;
     }
   }
 }

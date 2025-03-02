@@ -66,7 +66,7 @@ const FlowchartCanvas: React.FC<CanvasProps> = ({
       canvas.dispose();
       fabricCanvasRef.current = null;
     };
-  }, [width, height, isEditable, initialData, setupCanvas]);
+  }, [width, height, isEditable, initialData]);
   
   // Função para configurar o canvas
   const setupCanvas = (canvas: fabric.Canvas) => {

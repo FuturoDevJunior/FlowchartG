@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { DATA_TEST_IDS } from '../../src/constants/testIds';
 
 describe('Flowchart Canvas', () => {
@@ -69,4 +68,4 @@ describe('Flowchart Canvas', () => {
       }
     });
   });
-}); 
+});
