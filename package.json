@@ -19,6 +19,7 @@
     "test:coverage": "jest --config=jest.config.cjs --coverage",
     "cypress": "cypress open",
     "cypress:headless": "cypress run",
+    "cypress:headless:cjs": "cypress run --config-file cypress.config.cjs",
     "analyze": "vite build --mode analyze",
     "clean": "rm -rf dist node_modules/.vite",
     "docker:build": "docker build -t flowchart-g .",
