@@ -1,0 +1,10 @@
+# Directories
+dist/
+node_modules/
+coverage/
+build/
+
+# Files
+*.min.js
+*.bundle.js
+jest.config.cjs 
