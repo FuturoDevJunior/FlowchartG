@@ -1,17 +1,17 @@
 {
   "presets": [
-    ["@babel/preset-env", { "targets": { "node": "current" } }],
+    ["@babel/preset-env", {
+      "targets": {
+        "node": "current",
+        "browsers": ["last 2 versions", "not dead", "> 0.2%"]
+      }
+    }],
     "@babel/preset-typescript",
     ["@babel/preset-react", { "runtime": "automatic" }]
   ],
-  "plugins": [
-    ["babel-plugin-transform-vite-meta-env", {
-      "env": {
-        "VITE_APP_VERSION": "1.0.0",
-        "VITE_LOCAL_STORAGE_KEY": "flowchart_g_data_test",
-        "VITE_BASE_PATH": "",
-        "MODE": "test"
-      }
-    }]
-  ]
-} 
+  "env": {
+    "test": {
+      "plugins": ["babel-plugin-transform-vite-meta-env"]
+    }
+  }
+}

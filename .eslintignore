@@ -1,10 +1,32 @@
-# Directories
+# Build directories
 dist/
-node_modules/
-coverage/
+dist-ssr/
 build/
 
-# Files
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output/
+__tests__/
+__mocks__/
+
+# Config files
+*.config.cjs
+*.config.ts
+.eslintrc.cjs
+
+# Generated files
 *.min.js
 *.bundle.js
-jest.config.cjs 
+*.local
+stats.html
+
+# Cache directories
+.cache/
+.vite/
+.vercel/
+.netlify/
