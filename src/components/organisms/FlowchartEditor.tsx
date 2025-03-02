@@ -55,6 +55,41 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
 
+  // Handle window resizing
+  const handleResize = useCallback(() => {
+    if (!containerRef.current || !fabricCanvasRef.current || !canvasRef.current) return;
+    
+    try {
+      const containerWidth = containerRef.current.clientWidth || 800;
+      const containerHeight = containerRef.current.clientHeight || 500;
+      
+      const canvasWidth = containerWidth - (isMobile ? 10 : 20);
+      const canvasHeight = containerHeight - (isMobile ? 10 : 20);
+      
+      // Update canvas element dimensions
+      canvasRef.current.width = canvasWidth;
+      canvasRef.current.height = canvasHeight;
+      canvasRef.current.style.width = `${canvasWidth}px`;
+      canvasRef.current.style.height = `${canvasHeight}px`;
+      
+      // Update fabric canvas
+      fabricCanvasRef.current.handleResize(canvasWidth, canvasHeight);
+    } catch (error) {
+      console.error("Error resizing canvas:", error);
+    }
+  }, [isMobile]);
+
+  const handleFlowchartChange = useCallback((data: FlowchartData) => {
+    setFlowchartData(data);
+    // Save automatically
+    try {
+      saveToLocalStorage(data);
+    } catch (error) {
+      console.error("Error saving to localStorage:", error);
+      // Silent fail - don't bother user
+    }
+  }, []);
+
   // Detect if user is on mobile device
   useEffect(() => {
     const checkMobile = () => {
@@ -166,7 +201,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
         fabricCanvasRef.current = null;
       }
     };
-  }, [initialData, isMobile]);
+  }, [initialData, isMobile, handleFlowchartChange, handleResize]);
 
   // Handle zoom operations
   const handleZoomIn = useCallback(() => {
@@ -201,30 +236,6 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     }
   }, []);
 
-  // Handle window resizing
-  const handleResize = useCallback(() => {
-    if (!containerRef.current || !fabricCanvasRef.current || !canvasRef.current) return;
-    
-    try {
-      const containerWidth = containerRef.current.clientWidth || 800;
-      const containerHeight = containerRef.current.clientHeight || 500;
-      
-      const canvasWidth = containerWidth - (isMobile ? 10 : 20);
-      const canvasHeight = containerHeight - (isMobile ? 10 : 20);
-      
-      // Update canvas element dimensions
-      canvasRef.current.width = canvasWidth;
-      canvasRef.current.height = canvasHeight;
-      canvasRef.current.style.width = `${canvasWidth}px`;
-      canvasRef.current.style.height = `${canvasHeight}px`;
-      
-      // Update fabric canvas
-      fabricCanvasRef.current.handleResize(canvasWidth, canvasHeight);
-    } catch (error) {
-      console.error("Error resizing canvas:", error);
-    }
-  }, [isMobile]);
-
   // Tutorial that disappears
   useEffect(() => {
     if (showTutorial) {
@@ -236,17 +247,6 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
       return () => clearTimeout(timer);
     }
   }, [showTutorial]);
-
-  const handleFlowchartChange = useCallback((data: FlowchartData) => {
-    setFlowchartData(data);
-    // Save automatically
-    try {
-      saveToLocalStorage(data);
-    } catch (error) {
-      console.error("Error saving to localStorage:", error);
-      // Silent fail - don't bother user
-    }
-  }, []);
 
   const handleAddNode = useCallback((type: 'rectangle' | 'circle' | 'diamond') => {
     if (!fabricCanvasRef.current || !canvasRef.current) return;

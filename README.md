@@ -52,7 +52,7 @@ Um aplicativo web para criar, editar e compartilhar fluxogramas de forma simples
    ```
 
 3. Configure as variáveis de ambiente:
-   - Crie um arquivo `.env` na raiz do projeto com os seguintes valores:
+   - Crie um arquivo `.env` na raiz do projeto baseado no `.env.example`
    ```
    VITE_LOCAL_STORAGE_KEY=flowchart_g_data
    VITE_APP_VERSION=1.0.0
@@ -65,17 +65,76 @@ Um aplicativo web para criar, editar e compartilhar fluxogramas de forma simples
 
 5. Acesse o aplicativo em `http://localhost:5173`
 
+## Scripts Disponíveis
+
+- `npm run dev` - Inicia o servidor de desenvolvimento
+- `npm run build` - Compila o projeto para produção
+- `npm run preview` - Visualiza a build de produção localmente
+- `npm run lint` - Executa o linter
+- `npm run lint:fix` - Corrige problemas de linting automaticamente
+- `npm run test` - Executa os testes
+- `npm run test:watch` - Executa os testes em modo de observação
+- `npm run test:coverage` - Executa os testes com relatório de cobertura
+- `npm run cypress` - Abre o Cypress para testes E2E
+- `npm run cypress:headless` - Executa testes E2E em modo headless
+- `npm run analyze` - Analisa o tamanho do bundle
+- `npm run clean` - Remove arquivos de build e cache
+- `npm run docker:build` - Constrói a imagem Docker
+- `npm run docker:run` - Executa o container Docker
+- `npm run docker:compose` - Inicia todos os serviços com Docker Compose
+- `npm run docker:stop` - Para todos os serviços do Docker Compose
+
+## Docker
+
+Para executar o projeto usando Docker:
+
+```bash
+# Construir e iniciar com Docker Compose
+npm run docker:compose
+
+# Ou construir e executar manualmente
+npm run docker:build
+npm run docker:run
+```
+
+Acesse o aplicativo em `http://localhost:8080`
+
 ## Deploy
 
 ### Vercel (Recomendado)
 
 1. Faça fork deste repositório
-2. Importe o projeto no Vercel
+2. Importe o projeto no Vercel:
+   - Acesse vercel.com e faça login
+   - Clique em "Add New..." > "Project"
+   - Selecione seu repositório
+   - Mantenha as configurações padrão, pois o `vercel.json` já contém tudo
 3. Configure as variáveis de ambiente no painel do Vercel:
    - `VITE_LOCAL_STORAGE_KEY=flowchart_g_data`
    - `VITE_APP_VERSION=1.0.0`
-4. O deploy será feito automaticamente
+4. Clique em "Deploy" e aguarde a construção
 5. Acesse seu aplicativo na URL fornecida pelo Vercel
+
+### GitHub Pages
+
+1. Faça fork deste repositório
+2. Clone-o para sua máquina local
+3. Configure o base path para o nome do seu repositório:
+   - Crie/edite o arquivo `.env.local` e adicione:
+   ```
+   VITE_BASE_PATH=/seu-repositorio/
+   ```
+   - Substitua "seu-repositorio" pelo nome do seu repositório no GitHub
+4. Faça deploy com um único comando:
+   ```bash
+   npm run deploy:github
+   ```
+5. Acesse seu site em `https://seu-usuario.github.io/seu-repositorio/`
+6. Configure o GitHub Pages nas configurações do repositório:
+   - Acesse a aba "Settings" > "Pages"
+   - Na seção "Source", selecione "Deploy from a branch"
+   - Selecione a branch "gh-pages" e pasta "/ (root)"
+   - Clique em "Save"
 
 ### Netlify
 
@@ -85,13 +144,6 @@ Um aplicativo web para criar, editar e compartilhar fluxogramas de forma simples
 4. Configure o diretório de publicação: `dist`
 5. Configure as variáveis de ambiente necessárias
 6. O deploy será feito automaticamente
-
-### GitHub Pages
-
-1. Faça fork deste repositório
-2. Atualize a propriedade `base` no arquivo `vite.config.ts` para o nome do seu repositório: `base: '/seu-repositorio/',`
-3. Execute `npm run build`
-4. Execute `npm run deploy` (requer gh-pages como dependência)
 
 ## Estrutura do Projeto
 

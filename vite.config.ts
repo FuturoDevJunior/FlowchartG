@@ -8,15 +8,29 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const isProduction = mode === 'production';
   const isAnalyze = mode === 'analyze';
+  
+  // Get base path from environment or use repository name for GitHub Pages
+  // For GitHub Pages, change this to '/seu-repositorio/' ou use VITE_BASE_PATH env
+  const basePath = env.VITE_BASE_PATH || '/';
 
   return {
+    // Base path for deployment - modify if deploying to a subdirectory
+    base: basePath,
+
     plugins: [
-      react(),
-      // Add bundle analyzer when in analyze mode
+      // React plugin with babel options
+      react({
+        babel: {
+          plugins: [],
+        }
+      }),
+      
+      // Bundle analyzer when in analyze mode
       isAnalyze && visualizer({
         open: true,
         gzipSize: true,
         brotliSize: true,
+        filename: 'stats.html',
       }),
     ],
     
@@ -29,7 +43,10 @@ export default defineConfig(({ mode }) => {
     // Build options
     build: {
       // Increase warning limit for larger chunks
-      chunkSizeWarningLimit: 600,
+      chunkSizeWarningLimit: 800,
+      
+      // Target modern browsers
+      target: 'es2020',
       
       // Properly split chunks for better caching
       rollupOptions: {
@@ -41,7 +58,11 @@ export default defineConfig(({ mode }) => {
             }
             // Group React core libraries
             if (id.includes('react') || id.includes('scheduler')) {
-              return 'vendor';
+              return 'vendor-react';
+            }
+            // Group UI components
+            if (id.includes('lucide')) {
+              return 'vendor-ui';
             }
             // Default chunk behavior
             return undefined;
@@ -57,7 +78,10 @@ export default defineConfig(({ mode }) => {
           drop_console: true,
           drop_debugger: true
         }
-      } : undefined
+      } : undefined,
+      
+      // Report on bundle size
+      reportCompressedSize: true,
     },
     
     // Development server settings
@@ -66,6 +90,21 @@ export default defineConfig(({ mode }) => {
       strictPort: false,
       open: true,
       cors: true,
+      hmr: {
+        overlay: true,
+      },
+    },
+    
+    // Preview server config
+    preview: {
+      port: 4173,
+      strictPort: false,
+      open: true,
+    },
+    
+    // Make process.env available in client code via import.meta.env
+    define: {
+      __APP_VERSION__: JSON.stringify(env.VITE_APP_VERSION || '1.0.0'),
     },
   };
 });

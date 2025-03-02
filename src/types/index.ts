@@ -1,42 +1,100 @@
 /**
- * Core types for the FlowchartG application
- * Local storage version - no authentication
+ * Core application type definitions
+ * Centralizes all types used throughout the application
  */
 
-// Flowchart Node definition
-export interface FlowchartNode {
-  id: string;
-  type: 'rectangle' | 'circle' | 'diamond';
+/**
+ * Node position in the canvas
+ */
+export interface Position {
   x: number;
   y: number;
-  width: number;
-  height: number;
-  text: string;
-  fill: string;
-  stroke: string;
-  strokeWidth?: number;
-  metadata?: Record<string, unknown>;
 }
 
-// Flowchart Connector definition
-export interface FlowchartConnector {
+/**
+ * Style configuration for nodes and connections
+ */
+export interface Style {
+  fill: string;
+  stroke: string;
+  strokeWidth: number;
+  opacity?: number;
+}
+
+/**
+ * Node types supported by the application
+ */
+export type NodeType = 'rectangle' | 'circle' | 'diamond';
+
+/**
+ * Flowchart node
+ */
+export interface Node {
+  id: string;
+  type: NodeType;
+  position: Position;
+  text: string;
+  style: Style;
+  width?: number;
+  height?: number;
+  radius?: number;
+}
+
+/**
+ * Connection between nodes
+ */
+export interface Connection {
   id: string;
   from: string;
   to: string;
-  stroke: string;
-  strokeWidth: number;
-  arrow: boolean;
-  dashArray?: number[];
-  metadata?: Record<string, unknown>;
+  style?: Style;
+  label?: string;
+  points?: Position[];
 }
 
-// Complete Flowchart Data structure
+/**
+ * Complete flowchart data structure
+ */
 export interface FlowchartData {
-  id: string;
-  name: string;
-  nodes: FlowchartNode[];
-  connectors: FlowchartConnector[];
-  createdAt: string;
-  updatedAt: string;
-  version?: string;
+  nodes: Node[];
+  connections: Connection[];
+  metadata?: {
+    title?: string;
+    description?: string;
+    author?: string;
+    createdAt?: number;
+    updatedAt?: number;
+    version?: string;
+  };
+}
+
+/**
+ * Canvas operation types
+ */
+export enum CanvasOperation {
+  ADD_NODE = 'ADD_NODE',
+  MOVE_NODE = 'MOVE_NODE',
+  DELETE_NODE = 'DELETE_NODE',
+  EDIT_NODE_TEXT = 'EDIT_NODE_TEXT',
+  ADD_CONNECTION = 'ADD_CONNECTION',
+  DELETE_CONNECTION = 'DELETE_CONNECTION',
+  CLEAR_CANVAS = 'CLEAR_CANVAS',
+}
+
+/**
+ * History record for undo/redo functionality
+ */
+export interface HistoryRecord {
+  operation: CanvasOperation;
+  data: unknown;
+  timestamp: number;
+}
+
+/**
+ * Canvas state for history management
+ */
+export interface CanvasState {
+  flowchartData: FlowchartData;
+  history: HistoryRecord[];
+  historyIndex: number;
 }

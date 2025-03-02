@@ -64,7 +64,7 @@ declare module 'fabric' {
       from?: string;
       to?: string;
       text?: string;
-      [key: string]: any;
+      [key: string]: unknown;
     };
   }
 } 

@@ -1,12 +1,27 @@
 version: '3.8'
 
 services:
-  app:
+  # FlowchartG web application
+  flowchart-app:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: flowchart-g
     ports:
       - "8080:80"
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+    networks:
+      - flowchart-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+# Define custom network for service isolation
+networks:
+  flowchart-network:
+    driver: bridge
