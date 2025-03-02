@@ -24,7 +24,6 @@ interface WorkerMessage {
 }
 
 // Configuração do self para TypeScript
-// eslint-disable-next-line no-restricted-globals
 const ctx: Worker = self as unknown as Worker;
 
 // Processador principal de mensagens
@@ -172,7 +171,6 @@ function applyAttractiveForce(node1: LayoutNode, node2: LayoutNode, strength: nu
  * @param _data Dados para processamento (não utilizado na simulação)
  */
 function processSvgData(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _data: Record<string, unknown>
 ) {
   // Simulação de processamento pesado
@@ -194,7 +192,6 @@ function processSvgData(
  * @param _data Dados para análise (não utilizado na simulação)
  */
 function calculateDiagramStatistics(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _data: Record<string, unknown>
 ) {
   // Simulação de análise de dados
@@ -215,4 +212,4 @@ function calculateDiagramStatistics(
 }
 
 // Notificar que o worker está pronto
-ctx.postMessage({ type: 'WORKER_READY', data: { timestamp: Date.now() } }); 
+ctx.postMessage({ type: 'WORKER_READY', data: { timestamp: Date.now() } });

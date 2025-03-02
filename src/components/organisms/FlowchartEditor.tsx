@@ -59,7 +59,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
 
   // Integração do hook useHistory para funcionalidade de desfazer/refazer
   const { 
-    state: historyState, 
+    state: _historyState, 
     update: updateHistory,
     undo, 
     redo, 
@@ -266,6 +266,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     }
   }, [showTutorial]);
 
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   const handleAddNode = useCallback((type: 'rectangle' | 'circle' | 'diamond') => {
     if (!fabricCanvasRef.current || !canvasRef.current) return;
     

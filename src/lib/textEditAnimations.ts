@@ -7,7 +7,7 @@ export interface TextEditAnimationState {
   originalFill?: string;
   originalBackgroundColor?: string;
   originalStrokeWidth?: number;
-  animationInterval?: NodeJS.Timeout;
+  animationInterval?: ReturnType<typeof setTimeout>;
 }
 
 // Keep track of text objects currently being edited
@@ -118,4 +118,4 @@ export function updateCursorForTextObject(textObject: fabric.IText): void {
     cursorDuration: 600,
     selectionColor: 'rgba(0, 170, 255, 0.3)',
   });
-} 
+}

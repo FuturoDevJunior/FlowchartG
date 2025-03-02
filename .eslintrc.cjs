@@ -36,6 +36,13 @@ module.exports = {
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'warn',
     '@typescript-eslint/no-explicit-any': 'error',
+    '@typescript-eslint/no-unused-expressions': ['error', { 'allowShortCircuit': true, 'allowTernary': true }],
+    'no-undef': 'error',
+    'no-empty': ['error', { 'allowEmptyCatch': true }],
+    'no-prototype-builtins': 'off',
+    'no-cond-assign': ['error', 'except-parens'],
+    'no-fallthrough': 'off',
+    'no-control-regex': 'off',
     'react/react-in-jsx-scope': 'off'
   },
   overrides: [
