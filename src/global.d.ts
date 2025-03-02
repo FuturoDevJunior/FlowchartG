@@ -2,12 +2,24 @@
  * Global type declarations for FlowchartG application
  */
 
-// Extend Window interface with our global methods
+/// <reference types="vite/client" />
+
+// Interfaces para tipos globais
+
+/**
+ * Extensão da interface Window para propriedades globais
+ */
 interface Window {
-  /**
-   * Ensures the canvas is properly configured for the current browser environment
-   * @returns {boolean} True if initialization is successful
-   */
+  // Features do navegador detectadas durante a inicialização
+  browserFeatures?: {
+    supportsWebWorkers: boolean;
+    supportsResizeObserver: boolean;
+    supportsIntersectionObserver: boolean;
+    supportsTouchEvents: boolean;
+    supportWebGL: boolean;
+  };
+  
+  // Função para garantir que o canvas está pronto
   ensureCanvasReady?: () => boolean;
 }
 

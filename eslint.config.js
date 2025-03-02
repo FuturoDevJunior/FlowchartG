@@ -15,7 +15,9 @@ export default tseslint.config(
       'build/**',
       '**/*.min.js',
       '**/*.bundle.js',
-      'jest.config.cjs'
+      'jest.config.cjs',
+      'cypress.config.cjs',
+      '.eslintrc.cjs'
     ],
     languageOptions: {
       globals: {

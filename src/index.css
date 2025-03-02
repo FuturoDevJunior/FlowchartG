@@ -2,6 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Variáveis para alturas de viewport reais em dispositivos móveis */
+  --vh: 1vh;
+  
+  /* Variáveis para tema claro (padrão) */
+  --canvas-bg: #f5f5f5;
+  --node-bg: #ffffff;
+  --node-stroke: #2A2A2A;
+  --connection-stroke: #666666;
+  --text-primary: #2A2A2A;
+  --text-secondary: #666666;
+  --btn-primary-bg: #00FF88;
+  --btn-primary-text: #2A2A2A;
+  --btn-secondary-bg: #2A2A2A;
+  --btn-secondary-text: #ffffff;
+  --sidebar-bg: #ffffff;
+  --toolbar-bg: #ffffff;
+  --highlight-color: #00FF88;
+}
+
+/* Tema escuro */
+.dark {
+  --canvas-bg: #1a1a1a;
+  --node-bg: #2A2A2A;
+  --node-stroke: #ffffff;
+  --connection-stroke: #cccccc;
+  --text-primary: #ffffff;
+  --text-secondary: #cccccc;
+  --btn-primary-bg: #00FF88;
+  --btn-primary-text: #2A2A2A;
+  --btn-secondary-bg: #ffffff;
+  --btn-secondary-text: #2A2A2A;
+  --sidebar-bg: #2A2A2A;
+  --toolbar-bg: #2A2A2A;
+  --highlight-color: #00FF88;
+}
+
+/* Transição suave entre temas */
+*, *::before, *::after {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.theme-transition-ready {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Correções para dispositivos móveis */
+@media (max-width: 768px) {
+  .mobile-device .canvas-container {
+    height: calc(var(--vh, 1vh) * 100 - 120px);
+  }
+}
+
+/* Firefox-specific fixes */
+.firefox .flowchart-text {
+  dominant-baseline: middle;
+}
+
+/* Safari-specific fixes */
+.safari .flowchart-node {
+  will-change: transform;
+}
+
+/* Aplicar altura real do viewport em dispositivos mobile */
+.vh-fix {
+  height: calc(var(--vh, 1vh) * 100);
+}
+
+/* Utilidades para dispositivos touch */
+.touch-device .touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Animação de fade out para o loader inicial */
+#initial-loader.fade-out {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
 /* Estilos globais para garantir visibilidade do canvas */
 html, body, #root {
   height: 100%;
