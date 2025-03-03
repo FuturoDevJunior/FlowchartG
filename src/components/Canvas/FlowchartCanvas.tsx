@@ -3,13 +3,15 @@ import * as fabric from 'fabric';
 import { detectBrowser } from '../../utils/browserCompatibility';
 import type { CanvasProps } from './index';
 
+// Interface corrigida para objetos do Fabric
 interface FabricObject extends fabric.Object {
   id?: string;
 }
 
-interface FabricObjectEventData extends fabric.IEvent {
+// Corrigindo a tipagem do evento para evitar erros de compatibilidade
+type FabricObjectEventData = fabric.IEvent<Event> & {
   target?: FabricObject;
-}
+};
 
 /**
  * Componente de Canvas que utiliza Fabric.js para renderizar e manipular o fluxograma
@@ -28,57 +30,34 @@ const FlowchartCanvas: React.FC<CanvasProps> = ({
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   
-  // Inicialização do canvas
-  useEffect(() => {
-    // Verificar se o elemento canvas está disponível
-    if (!canvasRef.current) return;
-    
-    // Aplicar medidas específicas para navegadores
-    const browser = detectBrowser();
-    const useDPR = browser !== 'firefox'; // Firefox tem problemas com DPR
-    
-    // Criar instância do canvas Fabric
-    const canvas = new fabric.Canvas(canvasRef.current, {
-      width: typeof width === 'number' ? width : canvasRef.current.clientWidth,
-      height: typeof height === 'number' ? height : canvasRef.current.clientHeight,
-      selection: isEditable, // Permitir seleção múltipla apenas no modo de edição
-      preserveObjectStacking: true,
-      enableRetinaScaling: useDPR,
-      fireRightClick: true,
-      stopContextMenu: true,
-      backgroundColor: 'var(--canvas-bg)',
-    });
-    
-    fabricCanvasRef.current = canvas;
-    
-    // Configurações adicionais do canvas
-    setupCanvas(canvas);
-    
-    // Carregar dados iniciais se existirem
-    if (initialData) {
-      loadData(canvas, initialData);
+  // Função para carregar dados no canvas
+  const loadData = useCallback((canvas: fabric.Canvas, data: unknown) => {
+    if (typeof data === 'string') {
+      try {
+        canvas.loadFromJSON(data, canvas.renderAll.bind(canvas));
+      } catch (error) {
+        console.error('Erro ao carregar dados no canvas:', error);
+      }
+    } else if (data && typeof data === 'object') {
+      try {
+        canvas.loadFromJSON(JSON.stringify(data), canvas.renderAll.bind(canvas));
+      } catch (error) {
+        console.error('Erro ao carregar dados no canvas:', error);
+      }
     }
-    
-    setIsLoaded(true);
-    
-    // Limpar canvas na desmontagem do componente
-    return () => {
-      canvas.dispose();
-      fabricCanvasRef.current = null;
-    };
-  }, [width, height, isEditable, initialData]);
+  }, []);
   
   // Função para configurar o canvas
-  const setupCanvas = (canvas: fabric.Canvas) => {
+  const setupCanvas = useCallback((canvas: fabric.Canvas) => {
     // Configurar eventos do canvas
-    canvas.on<FabricObjectEventData>('object:selected', (e) => {
+    canvas.on('object:selected', (e: FabricObjectEventData) => {
       const obj = e.target;
       if (obj && obj.id && onNodeSelect) {
         onNodeSelect(obj.id);
       }
     });
     
-    canvas.on<FabricObjectEventData>('object:moved', (e) => {
+    canvas.on('object:moved', (e: FabricObjectEventData) => {
       const obj = e.target;
       if (obj && obj.id && onNodeMove && obj.left !== undefined && obj.top !== undefined) {
         onNodeMove(obj.id, obj.left, obj.top);
@@ -108,20 +87,64 @@ const FlowchartCanvas: React.FC<CanvasProps> = ({
       if (canvasRef.current && canvasRef.current.parentElement) {
         observer.observe(canvasRef.current.parentElement);
       }
+      
+      // Retornar função de limpeza
+      return () => {
+        if (canvasRef.current && canvasRef.current.parentElement) {
+          observer.unobserve(canvasRef.current.parentElement);
+        }
+      };
     } else {
       // Fallback para navegadores antigos
       window.addEventListener('resize', resizeCanvas);
+      
+      // Retornar função de limpeza
+      return () => {
+        window.removeEventListener('resize', resizeCanvas);
+      };
+    }
+  }, [onNodeSelect, onNodeMove]);
+  
+  // Inicialização do canvas
+  useEffect(() => {
+    // Verificar se o elemento canvas está disponível
+    if (!canvasRef.current) return;
+    
+    // Aplicar medidas específicas para navegadores
+    const browser = detectBrowser();
+    const useDPR = browser !== 'firefox'; // Firefox tem problemas com DPR
+    
+    // Criar instância do canvas Fabric
+    const canvas = new fabric.Canvas(canvasRef.current, {
+      width: typeof width === 'number' ? width : canvasRef.current.clientWidth,
+      height: typeof height === 'number' ? height : canvasRef.current.clientHeight,
+      selection: isEditable, // Permitir seleção múltipla apenas no modo de edição
+      preserveObjectStacking: true,
+      enableRetinaScaling: useDPR,
+      fireRightClick: true,
+      stopContextMenu: true,
+      backgroundColor: 'var(--canvas-bg)',
+    });
+    
+    fabricCanvasRef.current = canvas;
+    
+    // Configurações adicionais do canvas
+    const cleanupFn = setupCanvas(canvas);
+    
+    // Carregar dados iniciais se existirem
+    if (initialData) {
+      loadData(canvas, initialData);
     }
     
-    // Executar redimensionamento inicial
-    resizeCanvas();
-  };
-  
-  // Função para carregar dados no canvas
-  const loadData = (canvas: fabric.Canvas, data: unknown) => {
-    // Implementação específica para carregar dados no canvas
-    console.log('Carregando dados no canvas:', data);
-  };
+    setIsLoaded(true);
+    
+    // Limpar canvas na desmontagem do componente
+    return () => {
+      if (cleanupFn) cleanupFn();
+      canvas.dispose();
+      fabricCanvasRef.current = null;
+    };
+  }, [width, height, isEditable, initialData, setupCanvas, loadData]);
   
   return (
     <div className={`flowchart-canvas-wrapper ${className || ''}`} data-cy="flowchart-canvas-wrapper">

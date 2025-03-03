@@ -1,11 +1,19 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "lib": ["es5", "dom"],
-    "types": ["cypress", "node"],
+    "target": "es2021",
+    "lib": ["es2021", "dom"],
+    "types": ["cypress", "node", "@testing-library/cypress"],
     "allowJs": true,
     "skipLibCheck": true,
-    "isolatedModules": false
+    "esModuleInterop": true,
+    "isolatedModules": false,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["../src/*"]
+    }
   },
-  "include": ["**/*.ts"]
-} 
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}

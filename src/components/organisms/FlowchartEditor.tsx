@@ -332,7 +332,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
   }, []);
 
   // Optimized with useCallback to prevent recreation of this function on rerenders
-  const handleShare = useCallback(() => {
+  const _handleShare = useCallback(() => {
     if (!fabricCanvasRef.current || !flowchartData) return;
     
     try {
@@ -345,7 +345,7 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
     }
   }, [flowchartData]);
 
-  const handleSave = useCallback(async () => {
+  const _handleSave = useCallback(async () => {
     if (!fabricCanvasRef.current || !flowchartData) return;
     
     try {
@@ -583,12 +583,12 @@ const FlowchartEditor: React.FC<FlowchartEditorProps> = ({
 
   // Memoize toolbar props to prevent unecessary rerenders
   const toolbarProps = useMemo(() => ({
-    onShareClick: handleShare,
+    onShareClick: _handleShare,
     onExportPNG: () => { /* implementation */ },
     onExportSVG: () => { /* implementation */ },
     onReset: () => { /* implementation */ },
     // ...other props
-  }), [handleShare]);
+  }), [_handleShare]);
 
   // Memoize expensive canvas operations
   const _canvasOperations = useMemo(() => {
