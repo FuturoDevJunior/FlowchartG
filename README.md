@@ -1,4 +1,4 @@
-# FlowchartG
+#EM ANDAMENTO FlowchartG
 
 Um aplicativo web para criar, editar e compartilhar fluxogramas de forma simples e intuitiva. Funciona 100% no navegador, sem necessidade de autenticação ou backend.
 
